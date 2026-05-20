@@ -79,19 +79,26 @@ function extractItems(xml: string, source: string, category: string): NewsItem[]
   return items;
 }
 
+const HTML_ENTITIES: [RegExp, string][] = [
+  [/&amp;/g, String.raw`&`],
+  [/&lt;/g, "<"],
+  [/&gt;/g, ">"],
+  [/&quot;/g, String.fromCharCode(34)],
+  [/&#039;/g, String.fromCharCode(39)],
+  [/&apos;/g, String.fromCharCode(39)],
+  [/&#8217;/g, String.fromCharCode(8217)],
+  [/&#8220;/g, String.fromCharCode(8220)],
+  [/&#8221;/g, String.fromCharCode(8221)],
+  [/&#8211;/g, String.fromCharCode(8211)],
+  [/&#8230;/g, String.fromCharCode(8230)],
+];
+
 function decodeHTMLEntities(text: string): string {
-  return text
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#039;/g, "'")
-    .replace(/&apos;/g, "'")
-    .replace(/&#8217;/g, "'")
-    .replace(/&#8220;/g, "\u201C")
-    .replace(/&#8221;/g, "\u201D")
-    .replace(/&#8211;/g, "\u2013")
-    .replace(/&#8230;/g, "\u2026");
+  let result = text;
+  for (const [pattern, replacement] of HTML_ENTITIES) {
+    result = result.replace(pattern, replacement);
+  }
+  return result;
 }
 
 async function fetchRSSFeed(config: { url: string; source: string; category: string }): Promise<NewsItem[]> {
