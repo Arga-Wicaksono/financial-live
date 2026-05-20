@@ -4,46 +4,84 @@ export const dynamic = "force-dynamic";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-interface MetalPriceApiResponse {
-  success: boolean;
-  base: string;
-  rates: Record<string, number>;
-  unit: string;
-  timestamp: number;
-}
-
 interface GoldResponse {
   xau_usd: number;
   xau_idr: number;
-  antam_per_gram: number;
-  antam_buyback_per_gram: number;
   xau_idr_per_gram: number;
-  usd_idr_used: number;
+  antam_est_jual: number;
+  antam_est_beli: number;
+  usd_idr: number;
+  data_date: string;
+  source: string;
   timestamp: number;
   stale: boolean;
   cached_at: number | null;
-  source: string;
 }
 
 // ── In-memory cache ──────────────────────────────────────────────────────────
 
 let cachedResponse: GoldResponse | null = null;
 let lastFetchTime = 0;
-const CACHE_TTL_MS = 300_000; // 300 seconds (5 minutes)
+const CACHE_TTL_MS = 300_000; // 5 minutes
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const TROY_OZ_TO_GRAM = 31.1035;
-const ANTIM_PREMIUM = 0.15; // 15% premium over spot for Antam retail
-const ANTIM_BUYBACK_DISCOUNT = 0.03; // ~3% below spot for buyback
-const FALLBACK_XAU_USD = 2650;
-const FALLBACK_USD_IDR = 16_350;
+
+// Antam premium/discount — these are standard market approximations:
+// Antam retail (jual) typically sells at ~15% above spot
+// Antam buyback typically buys at ~3-5% below spot
+const ANTM_JUAL_PREMIUM = 0.15;
+const ANTM_BELI_DISCOUNT = 0.03;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
+/**
+ * Fetch real gold spot price from fawazahmed0/currency-api.
+ * This is a free, open-source API — no API key required.
+ * Data is updated daily (date of latest available data).
+ * Source: https://github.com/fawazahmed0/exchange-api
+ */
+async function fetchGoldSpotFromCurrencyApi(): Promise<{
+  xauUsd: number;
+  xauIdr: number;
+  date: string;
+} | null> {
+  try {
+    const res = await fetch(
+      "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/xau.json",
+      {
+        next: { revalidate: 0 },
+        signal: AbortSignal.timeout(10_000),
+      },
+    );
+
+    if (!res.ok) return null;
+
+    const json = await res.json();
+
+    const xauUsd = json.xau?.usd;
+    const xauIdr = json.xau?.idr;
+    const date = json.date;
+
+    if (!xauUsd || !Number.isFinite(xauUsd) || xauUsd <= 0) return null;
+
+    return {
+      xauUsd,
+      xauIdr: xauIdr && Number.isFinite(xauIdr) ? xauIdr : 0,
+      date: date || "unknown",
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetch real USD/IDR from our own forex endpoint (which uses ExchangeRate-API).
+ * Falls back to the XAU/IDR direct rate from currency-api if available.
+ */
 async function fetchUsdIdr(): Promise<number> {
   try {
-    // Hit our own forex endpoint which already has caching
     const res = await fetch("http://localhost:3000/api/market/forex", {
       signal: AbortSignal.timeout(5_000),
     });
@@ -57,87 +95,57 @@ async function fetchUsdIdr(): Promise<number> {
   } catch {
     // fall through
   }
-  return FALLBACK_USD_IDR;
-}
-
-async function tryMetalPriceApi(): Promise<{ xauUsd: number; timestamp: number } | null> {
-  try {
-    const res = await fetch(
-      "https://api.metalpriceapi.com/v1/latest?api_key=demo&base=USD&currencies=XAU",
-      {
-        next: { revalidate: 0 },
-        signal: AbortSignal.timeout(6_000),
-      },
-    );
-
-    if (!res.ok) return null;
-
-    const json = (await res.json()) as MetalPriceApiResponse;
-
-    if (!json.success || !json.rates?.XAU) return null;
-
-    // The API returns XAU as how many XAU per 1 USD (i.e., 1 / price_per_oz)
-    const xauPerUsd = json.rates.XAU;
-    const xauUsd = 1 / xauPerUsd;
-
-    if (!Number.isFinite(xauUsd) || xauUsd <= 0) return null;
-
-    return { xauUsd, timestamp: json.timestamp * 1000 };
-  } catch {
-    return null;
-  }
+  return 0; // Will be handled — no hardcoded fallback
 }
 
 function buildGoldResponse(
   xauUsd: number,
+  xauIdr: number,
   usdIdr: number,
-  timestamp: number,
-  stale: boolean,
+  date: string,
   source: string,
 ): GoldResponse {
-  const xauIdr = xauUsd * usdIdr;
-  const xauIdrPerGram = xauIdr / TROY_OZ_TO_GRAM;
-  const antamPerGram = xauIdrPerGram * (1 + ANTIM_PREMIUM);
-  const antamBuyback = xauIdrPerGram * (1 - ANTIM_BUYBACK_DISCOUNT);
+  // Use direct XAU/IDR if available, otherwise calculate from XAU/USD × USD/IDR
+  const effectiveXauIdr = xauIdr > 0 ? xauIdr : xauUsd * usdIdr;
+  const xauIdrPerGram = effectiveXauIdr / TROY_OZ_TO_GRAM;
+
+  // Antam estimates based on spot + standard premium/discount
+  const antamEstJual = xauIdrPerGram * (1 + ANTM_JUAL_PREMIUM);
+  const antamEstBeli = xauIdrPerGram * (1 - ANTM_BELI_DISCOUNT);
 
   return {
     xau_usd: Math.round(xauUsd * 100) / 100,
-    xau_idr: Math.round(xauIdr),
-    antam_per_gram: Math.round(antamPerGram),
-    antam_buyback_per_gram: Math.round(antamBuyback),
+    xau_idr: Math.round(effectiveXauIdr),
     xau_idr_per_gram: Math.round(xauIdrPerGram),
-    usd_idr_used: Math.round(usdIdr * 100) / 100,
-    timestamp,
-    stale,
-    cached_at: Date.now(),
+    antam_est_jual: Math.round(antamEstJual),
+    antam_est_beli: Math.round(antamEstBeli),
+    usd_idr: usdIdr > 0 ? Math.round(usdIdr * 100) / 100 : 0,
+    data_date: date,
     source,
+    timestamp: Date.now(),
+    stale: false,
+    cached_at: Date.now(),
   };
 }
 
 async function fetchGoldData(): Promise<GoldResponse> {
-  const now = Date.now();
+  // 1) Fetch real gold spot price from currency-api
+  const goldResult = await fetchGoldSpotFromCurrencyApi();
 
-  // 1) Try the metals API first
-  const metalResult = await tryMetalPriceApi();
-
-  let xauUsd: number;
-  let timestamp: number;
-  let source: string;
-
-  if (metalResult) {
-    xauUsd = metalResult.xauUsd;
-    timestamp = metalResult.timestamp || now;
-    source = "metalpriceapi";
-  } else {
-    // 2) Fallback: hardcoded XAU/USD + live USD/IDR
-    xauUsd = FALLBACK_XAU_USD;
-    timestamp = now;
-    source = "fallback";
+  if (!goldResult) {
+    throw new Error("Failed to fetch gold price from currency-api");
   }
 
+  // 2) Fetch USD/IDR for cross-reference
   const usdIdr = await fetchUsdIdr();
 
-  return buildGoldResponse(xauUsd, usdIdr, timestamp, false, source);
+  return buildGoldResponse(
+    goldResult.xauUsd,
+    goldResult.xauIdr,
+    usdIdr,
+    goldResult.date,
+    "fawazahmed0/currency-api",
+  );
 }
 
 // ── Route handler ────────────────────────────────────────────────────────────
@@ -156,8 +164,12 @@ export async function GET() {
     lastFetchTime = now;
     return NextResponse.json(fresh);
   } catch (err) {
-    console.error("[gold API] Fetch failed:", err instanceof Error ? err.message : err);
+    console.error(
+      "[gold API] Fetch failed:",
+      err instanceof Error ? err.message : err,
+    );
 
+    // Return stale cache if available
     if (cachedResponse !== null) {
       return NextResponse.json({
         ...cachedResponse,
@@ -165,17 +177,22 @@ export async function GET() {
       });
     }
 
-    // No cache — build from pure fallbacks
-    const fallback = buildGoldResponse(
-      FALLBACK_XAU_USD,
-      FALLBACK_USD_IDR,
-      now,
-      true,
-      "hard-fallback",
-    );
-
+    // No cache — return error, NO hardcoded fallback data
     return NextResponse.json(
-      { ...fallback, error: "Unable to fetch gold data, using fallback" },
+      {
+        xau_usd: 0,
+        xau_idr: 0,
+        xau_idr_per_gram: 0,
+        antam_est_jual: 0,
+        antam_est_beli: 0,
+        usd_idr: 0,
+        data_date: "",
+        source: "",
+        timestamp: 0,
+        stale: true,
+        cached_at: null,
+        error: "Gagal mengambil data emas. Sumber: fawazahmed0/currency-api (gratis)",
+      },
       { status: 502 },
     );
   }

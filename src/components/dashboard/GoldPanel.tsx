@@ -9,13 +9,15 @@ import { Activity } from 'lucide-react';
 interface GoldResponse {
   xau_usd: number;
   xau_idr: number;
-  antam_per_gram: number;
-  antam_buyback_per_gram: number;
   xau_idr_per_gram: number;
-  usd_idr_used: number;
+  antam_est_jual: number;
+  antam_est_beli: number;
+  usd_idr: number;
+  data_date: string;
+  source: string;
   timestamp: number;
   stale: boolean;
-  source: string;
+  cached_at: number | null;
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -83,8 +85,11 @@ export function GoldPanel() {
     <div className="h-full flex flex-col p-2 gap-1.5">
       {/* Section title */}
       <div className="flex items-center gap-2 px-1">
-        <span className="text-[11px] font-bold text-yellow-500/80 tracking-widest uppercase">Emas / IDR</span>
+        <span className="text-[11px] font-bold text-yellow-500/80 tracking-widest uppercase">Emas (XAU)</span>
         <span className="text-[9px] text-zinc-700">&bull; 5m</span>
+        {data.data_date && (
+          <span className="text-[9px] text-zinc-700">data {data.data_date}</span>
+        )}
       </div>
 
       {/* XAU/USD */}
@@ -100,21 +105,24 @@ export function GoldPanel() {
       <div className="rounded-lg border border-zinc-800/30 bg-zinc-900/20 px-3 py-2">
         <div className="text-[9px] text-zinc-500 uppercase tracking-wider mb-0.5">XAU / IDR <span className="text-zinc-700 normal-case">per Troy Oz</span></div>
         <PriceCell value={data.xau_idr} format="currency" decimals={0} className="text-sm font-bold tabular-nums" />
-        <div className="text-[9px] text-zinc-700 mt-0.5">Kurs Rp {data.usd_idr_used.toLocaleString('id-ID')}/USD</div>
+        <div className="text-[9px] text-zinc-700 mt-0.5">
+          Rp {Math.round(data.xau_idr_per_gram).toLocaleString('id-ID')}/gram
+          {data.usd_idr > 0 && <> &bull; Kurs Rp {data.usd_idr.toLocaleString('id-ID')}/USD</>}
+        </div>
       </div>
 
-      {/* Antam Section */}
+      {/* Antam Estimates — clearly labeled */}
       <div className="flex-1 rounded-lg border border-yellow-500/15 bg-gradient-to-b from-yellow-500/8 to-transparent px-3 py-2 flex flex-col justify-between">
         <div className="flex items-center gap-1.5 mb-1.5">
           <span className="text-xs">{'\u{1FA99}'}</span>
-          <span className="text-[10px] font-bold text-yellow-500/90 tracking-widest uppercase">Antam / Gram</span>
+          <span className="text-[10px] font-bold text-yellow-500/90 tracking-widest uppercase">Estimasi Antam / Gram</span>
         </div>
 
         <div className="flex-1 flex flex-col justify-center gap-1.5">
           {/* Jual */}
           <div>
-            <div className="text-[9px] text-zinc-500 mb-0.5">Harga Jual (Retail)</div>
-            <PriceCell value={data.antam_per_gram} format="currency" decimals={0} className="text-base font-bold text-yellow-400 tabular-nums" />
+            <div className="text-[9px] text-zinc-500 mb-0.5">Est. Harga Jual (retail)</div>
+            <PriceCell value={data.antam_est_jual} format="currency" decimals={0} className="text-sm font-bold text-yellow-400 tabular-nums" />
           </div>
 
           {/* Divider */}
@@ -122,13 +130,13 @@ export function GoldPanel() {
 
           {/* Beli */}
           <div>
-            <div className="text-[9px] text-zinc-500 mb-0.5">Harga Beli (Buyback)</div>
-            <PriceCell value={data.antam_buyback_per_gram} format="currency" decimals={0} className="text-sm font-bold text-emerald-400 tabular-nums" />
+            <div className="text-[9px] text-zinc-500 mb-0.5">Est. Harga Beli (buyback)</div>
+            <PriceCell value={data.antam_est_beli} format="currency" decimals={0} className="text-sm font-bold text-emerald-400 tabular-nums" />
           </div>
         </div>
 
         <div className="text-[8px] text-zinc-700 mt-1.5 leading-snug">
-          * Estimasi spot + premium ~15%
+          * Estimasi dari spot + premium retail ~15% / buyback ~3%
         </div>
       </div>
     </div>

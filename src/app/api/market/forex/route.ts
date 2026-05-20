@@ -43,10 +43,6 @@ let cachedResponse: ForexResponse | null = null;
 let lastFetchTime = 0;
 const CACHE_TTL_MS = 60_000; // 60 seconds
 
-// ── Fallback USD/IDR rate ────────────────────────────────────────────────────
-
-const FALLBACK_USD_IDR = 16_350;
-
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 async function fetchForexData(): Promise<ForexResponse> {
@@ -63,9 +59,9 @@ async function fetchForexData(): Promise<ForexResponse> {
   const rates = json.rates;
 
   // We need IDR to compute all rates into IDR
-  let usdIdr = rates["IDR"];
+  const usdIdr = rates["IDR"];
   if (!usdIdr || !Number.isFinite(usdIdr)) {
-    usdIdr = FALLBACK_USD_IDR;
+    throw new Error("IDR rate not available from ExchangeRate-API");
   }
 
   const forexRates: ForexRate[] = TARGET_CURRENCIES.map(({ code, symbol }) => {
@@ -114,22 +110,15 @@ export async function GET() {
       });
     }
 
-    // No cache — build a response from fallback rate
-    const fallbackRates: ForexRate[] = TARGET_CURRENCIES.map(({ code, symbol }) => ({
-      currency: code,
-      symbol,
-      rate_idr: code === "USD" ? FALLBACK_USD_IDR : 0,
-      rate_usd: code === "USD" ? 1 : 0,
-    }));
-
+    // No cache — return error, NO hardcoded fallback data
     return NextResponse.json(
       {
-        base_usd_idr: FALLBACK_USD_IDR,
-        rates: fallbackRates,
+        base_usd_idr: 0,
+        rates: [],
         timestamp: 0,
         stale: true,
         cached_at: null,
-        error: "Unable to fetch forex data, using fallback",
+        error: "Gagal mengambil data valas. Sumber: ExchangeRate-API (gratis)",
       },
       { status: 502 },
     );
