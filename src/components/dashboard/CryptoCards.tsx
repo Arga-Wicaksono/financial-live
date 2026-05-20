@@ -44,11 +44,11 @@ function formatVol(vol: number): string {
 function detectDirection(data: CryptoPairData[], ref: React.MutableRefObject<Map<string, number>>): Map<string, Direction> {
   const dirs = new Map<string, Direction>();
   for (const item of data) {
-    const prev = ref.get(item.pair);
+    const prev = ref.current.get(item.pair);
     if (prev !== undefined && item.last !== prev && prev !== 0) {
       dirs.set(item.pair, item.last > prev ? 'up' : 'down');
     }
-    ref.set(item.pair, item.last);
+    ref.current.set(item.pair, item.last);
   }
   return dirs;
 }
