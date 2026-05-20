@@ -26,12 +26,6 @@ function formatPrice(value: number, format: string, decimals: number): string {
 }
 
 export const PriceCell = memo(function PriceCell({ value, format = 'currency', decimals = 0, className = '', direction }: PriceCellProps) {
-  const baseColor = value > 0
-    ? 'text-white'
-    : value < 0
-      ? 'text-red-400'
-      : 'text-zinc-600';
-
   const animClass = direction === 'up'
     ? 'animate-flash-up'
     : direction === 'down'
@@ -41,9 +35,9 @@ export const PriceCell = memo(function PriceCell({ value, format = 'currency', d
   return (
     <span
       className={`
-        inline-block rounded px-1.5 py-0.5 font-mono tabular-nums
+        inline-block rounded-md px-1.5 py-0.5 font-mono tabular-nums
+        transition-colors duration-300
         ${animClass}
-        ${animClass ? '' : baseColor}
         ${className}
       `}
     >

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { PriceCell } from './PriceCell';
 import { Activity } from 'lucide-react';
 
@@ -33,6 +33,11 @@ const ICONS: Record<string, string> = {
   BTC: '\u20BF', ETH: '\u039E', SOL: '\u25CE', XRP: '\u25CF', BNB: '\u25C6', DOGE: '\u25CF', USDT: '\u20AE',
 };
 
+const ICON_COLORS: Record<string, string> = {
+  BTC: 'text-amber-400', ETH: 'text-indigo-400', SOL: 'text-violet-400',
+  XRP: 'text-slate-300', BNB: 'text-yellow-400', DOGE: 'text-orange-400', USDT: 'text-emerald-400',
+};
+
 function formatVol(vol: number): string {
   if (vol === 0) return '-';
   if (vol >= 1e12) return `${(vol / 1e12).toFixed(1)}T`;
@@ -53,70 +58,111 @@ function detectDirection(data: CryptoPairData[], ref: React.MutableRefObject<Map
   return dirs;
 }
 
+// ── Mini Price Range Bar ──────────────────────────────────────────────────────
+
+function MiniPriceBar({ low, high, last }: { low: number; high: number; last: number }) {
+  if (high === 0 || low === 0) return null;
+  const range = high - low;
+  const pct = Math.max(0, Math.min(100, ((last - low) / range) * 100));
+  const isUp = last >= (high + low) / 2;
+  const color = isUp ? 'bg-green-500' : 'bg-red-400';
+
+  return (
+    <div className="mini-bar-track mt-1.5">
+      <div
+        className="mini-bar-fill bg-gradient-to-r from-red-400/50 via-zinc-500/50 to-green-500/50"
+        style={{ left: '0%', width: '100%' }}
+      />
+      <div
+        className={`mini-bar-dot ${color}`}
+        style={{ left: `${pct}%`, color: isUp ? '#22c55e' : '#f87171' }}
+      />
+    </div>
+  );
+}
+
+// ── Volume Bar ─────────────────────────────────────────────────────────────────
+
+function VolumeBar({ vol, maxVol }: { vol: number; maxVol: number }) {
+  const pct = maxVol > 0 ? Math.max(5, (vol / maxVol) * 100) : 5;
+  return (
+    <div className="vol-bar mt-1">
+      <div
+        className="vol-bar-fill bg-gradient-to-r from-amber-500/60 to-amber-400/40"
+        style={{ width: `${pct}%` }}
+      />
+    </div>
+  );
+}
+
 // ── Single Crypto Card ─────────────────────────────────────────────────────────
 
 function CryptoCard({ item, dir, tick }: { item: CryptoPairData; dir?: Direction; tick: number }) {
   const icon = ICONS[item.name] || '\u25CF';
+  const iconColor = ICON_COLORS[item.name] || 'text-zinc-400';
   const isUp = item.change_pct > 0;
   const isDown = item.change_pct < 0;
-  const changeColor = isUp ? 'text-green-400' : isDown ? 'text-red-400' : 'text-zinc-500';
+
+  const cardAnim = dir === 'up'
+    ? 'animate-card-up'
+    : dir === 'down'
+      ? 'animate-card-down'
+      : '';
 
   return (
-    <div className={`rounded-lg border p-2.5 flex flex-col justify-between transition-all duration-300 ${
-      dir === 'up'
-        ? 'border-green-500/30 bg-green-500/5 shadow-[0_0_12px_rgba(34,197,94,0.15)]'
-        : dir === 'down'
-          ? 'border-red-500/30 bg-red-500/5 shadow-[0_0_12px_rgba(239,68,68,0.15)]'
-          : 'border-zinc-800/40 bg-zinc-900/30'
-    }`}>
-      {/* Header: Name + Change */}
-      <div className="flex items-start justify-between mb-1.5">
-        <div className="flex items-center gap-1.5">
-          <span className="text-lg leading-none text-amber-500/80">{icon}</span>
+    <div className={`rounded-xl p-3 flex flex-col justify-between transition-all duration-300 relative overflow-hidden bg-zinc-900/40 border border-zinc-800/30 hover:border-zinc-700/40 ${cardAnim}`}>
+      {/* Top row: Name + Change Badge */}
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-zinc-800/60 flex items-center justify-center">
+            <span className={`text-base leading-none ${iconColor}`}>{icon}</span>
+          </div>
           <div>
-            <span className="font-bold text-white text-sm">{item.name}</span>
-            <span className="text-zinc-600 text-[10px] font-normal">/IDR</span>
+            <span className="font-bold text-white text-sm tracking-wide">{item.name}</span>
+            <span className="text-zinc-600 text-[10px] font-normal block">/IDR</span>
           </div>
         </div>
-        <span className={`text-[11px] font-bold tabular-nums ${changeColor}`}>
-          {isUp ? '\u25B2' : isDown ? '\u25BC' : ''}
-          {isUp ? '+' : ''}{item.change_pct.toFixed(2)}%
-        </span>
+        {/* Change badge */}
+        <div className={`px-2 py-0.5 rounded-md text-[11px] font-bold tabular-nums ${
+          isUp
+            ? 'bg-green-500/15 text-green-400 border border-green-500/20'
+            : isDown
+              ? 'bg-red-500/15 text-red-400 border border-red-500/20'
+              : 'bg-zinc-800/40 text-zinc-500 border border-zinc-700/30'
+        }`}>
+          {isUp ? '\u25B2' : isDown ? '\u25BC' : '\u25CF'}
+          {' '}{isUp ? '+' : ''}{item.change_pct.toFixed(2)}%
+        </div>
       </div>
 
-      {/* Price (big, prominent) */}
-      <div className="mb-1.5">
+      {/* Price — large and prominent */}
+      <div className="mb-1">
         <PriceCell
           key={`price-${item.pair}-${tick}`}
           value={item.last}
           format="currency"
           decimals={0}
-          className="text-base font-bold tabular-nums"
+          className="text-lg font-bold tabular-nums"
           direction={dir}
         />
       </div>
 
+      {/* Mini price range bar */}
+      <MiniPriceBar low={item.low} high={item.high} last={item.last} />
+
       {/* Bid/Ask row */}
-      <div className="flex items-center justify-between text-[10px]">
+      <div className="flex items-center justify-between mt-2 text-[10px]">
         <div>
           <span className="text-zinc-600">Beli </span>
-          <PriceCell
-            key={`buy-${item.pair}-${tick}`}
-            value={item.buy}
-            format="currency"
-            decimals={0}
-            className="text-green-400/70 tabular-nums"
-          />
+          <span className="text-green-400/80 tabular-nums font-medium">
+            {new Intl.NumberFormat('id-ID').format(item.buy)}
+          </span>
         </div>
         <div>
           <span className="text-zinc-600">Jual </span>
-          <PriceCell
-            key={`sell-${item.pair}-${tick}`}
-            value={item.sell}
-            format="currency"
-            decimals={0}
-            className="text-red-400/70 tabular-nums"
-          />
+          <span className="text-red-400/80 tabular-nums font-medium">
+            {new Intl.NumberFormat('id-ID').format(item.sell)}
+          </span>
         </div>
       </div>
     </div>
@@ -152,7 +198,7 @@ export function CryptoCards() {
         setDirections(dirs);
         setTick(t => t + 1);
         if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
-        flashTimerRef.current = setTimeout(() => setDirections(new Map()), 650);
+        flashTimerRef.current = setTimeout(() => setDirections(new Map()), 800);
       }
 
       setData(json.data);
@@ -176,12 +222,36 @@ export function CryptoCards() {
     };
   }, [fetchData]);
 
+  const maxVol = useMemo(() => Math.max(...data.map(d => d.vol_idr), 1), [data]);
+
   if (loading && !error) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="flex items-center gap-2 text-zinc-600">
-          <Activity className="w-4 h-4 animate-spin" />
-          <span className="text-xs">Memuat data crypto...</span>
+      <div className="h-full flex flex-col p-3 gap-2">
+        {/* Shimmer skeleton */}
+        <div className="flex items-center gap-2 px-1">
+          <div className="skeleton-shimmer h-3 w-20 rounded" />
+          <div className="skeleton-shimmer h-2 w-16 rounded" />
+        </div>
+        <div className="flex-[1] grid grid-cols-4 gap-2">
+          {[1,2,3,4].map(i => (
+            <div key={i} className="rounded-xl p-3 bg-zinc-900/40 border border-zinc-800/20">
+              <div className="skeleton-shimmer h-4 w-12 rounded mb-2" />
+              <div className="skeleton-shimmer h-5 w-28 rounded mb-2" />
+              <div className="skeleton-shimmer h-2 w-full rounded mb-3" />
+              <div className="flex justify-between">
+                <div className="skeleton-shimmer h-3 w-16 rounded" />
+                <div className="skeleton-shimmer h-3 w-16 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex-[1] grid grid-cols-4 gap-2">
+          {[1,2,3,4].map(i => (
+            <div key={i} className="rounded-xl p-3 bg-zinc-900/40 border border-zinc-800/20">
+              <div className="skeleton-shimmer h-4 w-12 rounded mb-2" />
+              <div className="skeleton-shimmer h-5 w-24 rounded" />
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -192,49 +262,53 @@ export function CryptoCards() {
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <span className="text-xs text-red-400 block">{error}</span>
-          <button
-            onClick={fetchData}
-            className="mt-1 text-[10px] text-zinc-500 hover:text-white underline"
-          >
-            Coba lagi
-          </button>
+          <button onClick={fetchData} className="mt-1 text-[10px] text-zinc-500 hover:text-white underline">Coba lagi</button>
         </div>
       </div>
     );
   }
 
-  // Layout: 4 cols on top row (BTC, ETH, SOL, XRP), 3 cols on bottom (BNB, DOGE, USDT)
   const topRow = data.slice(0, 4);
   const bottomRow = data.slice(4, 7);
 
   return (
-    <div className="h-full flex flex-col p-2 gap-1.5">
-      {/* Section title */}
-      <div className="flex items-center gap-2 px-1">
-        <span className="text-[11px] font-bold text-amber-500/80 tracking-widest uppercase">Crypto / IDR</span>
-        <span className="text-[9px] text-zinc-700">Indodax &bull; 10s</span>
+    <div className="h-full flex flex-col p-2.5 gap-2">
+      {/* Section header */}
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-2">
+          <div className="w-1 h-4 rounded-full bg-amber-500" />
+          <span className="text-[11px] font-bold text-amber-400/90 tracking-widest uppercase">Crypto / IDR</span>
+          <span className="text-[9px] text-zinc-700 font-mono">Indodax</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-500 live-dot-pulse" />
+          <span className="text-[9px] text-zinc-600 font-mono">10s</span>
+        </div>
       </div>
 
-      {/* Top row: 4 cards */}
+      {/* Top row: 4 main crypto cards */}
       <div className="flex-[1] grid grid-cols-4 gap-2 min-h-0">
         {topRow.map(item => (
           <CryptoCard key={item.pair} item={item} dir={directions.get(item.pair)} tick={tick} />
         ))}
       </div>
 
-      {/* Bottom row: 3 cards */}
+      {/* Bottom row: 3 cards + volume overview */}
       <div className="flex-[1] grid grid-cols-4 gap-2 min-h-0">
         {bottomRow.map(item => (
           <CryptoCard key={item.pair} item={item} dir={directions.get(item.pair)} tick={tick} />
         ))}
-        {/* Vol info card */}
-        <div className="rounded-lg border border-zinc-800/20 bg-zinc-900/10 p-2.5 flex flex-col justify-center">
-          <span className="text-[9px] text-zinc-600 uppercase tracking-wider mb-1.5">Total Vol. 24h</span>
-          <div className="space-y-1">
+        {/* Volume overview card */}
+        <div className="rounded-xl p-3 bg-zinc-900/40 border border-zinc-800/20 flex flex-col justify-between">
+          <span className="text-[9px] text-zinc-600 uppercase tracking-wider font-semibold">Volume 24h</span>
+          <div className="flex-1 flex flex-col justify-center gap-1.5 mt-2">
             {data.slice(0, 4).map(item => (
-              <div key={item.pair} className="flex items-center gap-2 text-[10px]">
-                <span className="text-zinc-500 w-7 text-right font-bold">{item.name}</span>
-                <span className="text-zinc-400 tabular-nums">{formatVol(item.vol_idr)}</span>
+              <div key={item.pair} className="space-y-0.5">
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className={`font-bold ${ICON_COLORS[item.name] || 'text-zinc-400'}`}>{item.name}</span>
+                  <span className="text-zinc-400 tabular-nums">{formatVol(item.vol_idr)}</span>
+                </div>
+                <VolumeBar vol={item.vol_idr} maxVol={maxVol} />
               </div>
             ))}
           </div>

@@ -41,6 +41,7 @@ export function ForexGrid() {
   const [error, setError] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [tick, setTick] = useState(0);
 
   const fetchData = useCallback(async () => {
     try {
@@ -57,6 +58,7 @@ export function ForexGrid() {
       setLoading(false);
       setError(null);
       hasLoadedRef.current = true;
+      setTick(t => t + 1);
     } catch (err) {
       console.error('ForexGrid fetch error:', err);
       if (!hasLoadedRef.current) {
@@ -75,10 +77,16 @@ export function ForexGrid() {
 
   if (loading && !error) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="flex items-center gap-2 text-zinc-600">
-          <Activity className="w-4 h-4 animate-spin" />
-          <span className="text-xs">Memuat data valas...</span>
+      <div className="h-full flex flex-col p-3 gap-2">
+        <div className="flex items-center gap-2 px-1">
+          <div className="skeleton-shimmer h-3 w-20 rounded" />
+          <div className="skeleton-shimmer h-2 w-16 rounded" />
+        </div>
+        <div className="skeleton-shimmer h-12 rounded-xl" />
+        <div className="flex-1 grid grid-cols-4 grid-rows-2 gap-1.5">
+          {[1,2,3,4,5,6,7].map(i => (
+            <div key={i} className="skeleton-shimmer rounded-lg h-full" />
+          ))}
         </div>
       </div>
     );
@@ -96,44 +104,63 @@ export function ForexGrid() {
   }
 
   return (
-    <div className="h-full flex flex-col p-2 gap-1.5">
-      {/* Section title */}
-      <div className="flex items-center gap-2 px-1">
-        <span className="text-[11px] font-bold text-emerald-500/80 tracking-widest uppercase">Valas / IDR</span>
-        <span className="text-[9px] text-zinc-700">Kurs &bull; 60s</span>
+    <div className="h-full flex flex-col p-2.5 gap-2">
+      {/* Section header */}
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-2">
+          <div className="w-1 h-4 rounded-full bg-emerald-500" />
+          <span className="text-[11px] font-bold text-emerald-400/90 tracking-widest uppercase">Valas / IDR</span>
+          <span className="text-[9px] text-zinc-700 font-mono">Kurs</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-500 live-dot-pulse" />
+          <span className="text-[9px] text-zinc-600 font-mono">60s</span>
+        </div>
       </div>
 
-      {/* USD/IDR Hero */}
+      {/* USD/IDR Hero Banner */}
       {usdIdr > 0 && (
-        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-1.5 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-base">{'\u{1F1FA}\u{1F1F8}'}</span>
+        <div className="rounded-xl px-4 py-2.5 flex items-center justify-between relative overflow-hidden"
+          style={{
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.03) 50%, rgba(6, 95, 70, 0.08) 100%)',
+            border: '1px solid rgba(16, 185, 129, 0.2)',
+          }}
+        >
+          {/* Animated glow line at top */}
+          <div className="absolute top-0 left-0 right-0 h-[1px]"
+            style={{
+              background: 'linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.5), transparent)',
+            }}
+          />
+          <div className="flex items-center gap-3">
+            <span className="text-xl">{'\u{1F1FA}\u{1F1F8}'}</span>
             <div>
-              <span className="font-bold text-white text-xs">USD / IDR</span>
-              <span className="text-[9px] text-zinc-600 ml-1.5">Benchmark</span>
+              <span className="font-bold text-white text-sm">USD / IDR</span>
+              <span className="text-[9px] text-emerald-400/60 ml-2 font-medium">BENCHMARK</span>
             </div>
           </div>
-          <span className="font-mono text-lg font-bold text-white tabular-nums">
+          <span className="font-mono text-xl font-bold text-emerald-300 tabular-nums tracking-wide" key={tick}>
             {new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(usdIdr)}
           </span>
         </div>
       )}
 
-      {/* Currency grid: 4 columns x 2 rows */}
+      {/* Currency grid */}
       <div className="flex-1 grid grid-cols-4 grid-rows-2 gap-1.5 min-h-0">
         {CURRENCIES.filter(c => c.code !== 'USD').map(({ code, flag, label }) => {
           const rate = rateMap.get(code);
           return (
             <div
               key={code}
-              className="rounded-md border border-zinc-800/30 bg-zinc-900/20 px-2 py-1.5 flex flex-col justify-center"
+              className="rounded-lg border border-zinc-800/30 bg-zinc-900/30 px-2.5 py-2 flex flex-col justify-center hover:bg-zinc-800/30 hover:border-zinc-700/40 transition-all duration-200 group"
             >
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <span className="text-xs">{flag}</span>
-                <span className="text-[10px] font-bold text-zinc-400">{code}</span>
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-sm group-hover:scale-110 transition-transform duration-200">{flag}</span>
+                <span className="text-[10px] font-bold text-zinc-400 tracking-wide">{code}</span>
+                <span className="text-[8px] text-zinc-700 ml-auto">/IDR</span>
               </div>
               {rate ? (
-                <span className="font-mono text-xs font-semibold text-white tabular-nums">
+                <span className="font-mono text-[13px] font-semibold text-white tabular-nums" key={tick}>
                   {new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(rate.rate_idr)}
                 </span>
               ) : (
