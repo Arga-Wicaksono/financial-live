@@ -4,6 +4,10 @@ import { useState, useEffect, useRef } from 'react';
 import { CryptoCards } from '@/components/dashboard/CryptoCards';
 import { ForexGrid } from '@/components/dashboard/ForexGrid';
 import { GoldPanel } from '@/components/dashboard/GoldPanel';
+import { StocksPanel } from '@/components/dashboard/StocksPanel';
+import { GlobalIndices } from '@/components/dashboard/GlobalIndices';
+import { CommoditiesGrid } from '@/components/dashboard/CommoditiesGrid';
+import { SentimentBar } from '@/components/dashboard/SentimentBar';
 import { Activity } from 'lucide-react';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -96,7 +100,7 @@ function TickerTape() {
     <div className="overflow-hidden h-7 flex items-center bg-[#08080a] border-b border-zinc-800/30 shrink-0">
       <div className="flex animate-ticker">
         {content}
-        {content} {/* Duplicate for seamless loop */}
+        {content}
       </div>
     </div>
   );
@@ -109,10 +113,13 @@ function StatusPills() {
     <div className="flex items-center gap-1.5">
       {[
         { label: 'CRYPTO', color: 'bg-amber-500', delay: '0s' },
-        { label: 'VALAS', color: 'bg-emerald-500', delay: '0.5s' },
-        { label: 'EMAS', color: 'bg-yellow-500', delay: '1s' },
+        { label: 'SAHAM', color: 'bg-cyan-500', delay: '0.3s' },
+        { label: 'VALAS', color: 'bg-emerald-500', delay: '0.6s' },
+        { label: 'EMAS', color: 'bg-yellow-500', delay: '0.9s' },
+        { label: 'GLOBAL', color: 'bg-blue-500', delay: '1.2s' },
+        { label: 'KOMODITAS', color: 'bg-orange-500', delay: '1.5s' },
       ].map(({ label, color, delay }) => (
-        <div key={label} className={`flex items-center gap-1 px-1.5 py-0.5 rounded bg-zinc-800/40 border border-zinc-800/30`}>
+        <div key={label} className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-zinc-800/40 border border-zinc-800/30">
           <span className={`w-1.5 h-1.5 rounded-full ${color} status-breathe`} style={{ animationDelay: delay }} />
           <span className="text-[8px] text-zinc-500 font-bold tracking-wider">{label}</span>
         </div>
@@ -138,13 +145,13 @@ export default function TradingDashboard() {
     <div className={`h-screen w-screen flex flex-col overflow-hidden dashboard-grid-bg ${showFullscreen ? 'fixed inset-0 z-50' : ''}`}
       style={{ backgroundColor: '#09090b' }}>
 
-      {/* ── Ticker Tape (animated scrolling crypto prices) ──────────────────── */}
+      {/* ── Ticker Tape ──────────────────────────────────────────────────────── */}
       <TickerTape />
 
-      {/* ── Top Bar: Logo + Clock + Status ──────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 py-2 shrink-0" style={{ background: 'rgba(12, 12, 14, 0.95)' }}>
+      {/* ── Top Bar: Logo + Clock + Status ───────────────────────────────────── */}
+      <div className="flex items-center justify-between px-4 py-1.5 shrink-0" style={{ background: 'rgba(12, 12, 14, 0.95)' }}>
         <div className="flex items-center gap-3">
-          <div className="w-6 h-6 rounded-md bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/20 flex items-center justify-center">
+          <div className="w-6 h-6 rounded-md bg-gradient-to-br from-amber-500/20 to-cyan-500/10 border border-amber-500/20 flex items-center justify-center">
             <Activity className="w-3.5 h-3.5 text-amber-400" />
           </div>
           <div>
@@ -156,38 +163,63 @@ export default function TradingDashboard() {
         <LiveClock />
       </div>
 
-      {/* ── Main Content ────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-h-0 p-1.5 gap-1.5">
+      {/* ── Sentiment Bar (Fear & Greed + BI Rate) ──────────────────────────── */}
+      <div className="shrink-0 px-4 py-1 bg-[#0a0a0c] border-b border-zinc-800/20">
+        <SentimentBar />
+      </div>
 
-        {/* Row 1: Crypto (55%) */}
-        <div className="flex-[55] min-h-0 rounded-xl overflow-hidden gradient-border-amber"
+      {/* ── Main Content ────────────────────────────────────────────────────── */}
+      <div className="flex-1 flex flex-col min-h-0 p-1 gap-1">
+
+        {/* ═══ ROW 1: Crypto (top priority, 45%) ═══ */}
+        <div className="flex-[45] min-h-0 rounded-xl overflow-hidden gradient-border-amber"
           style={{ background: 'rgba(10, 10, 12, 0.8)' }}>
           <CryptoCards />
         </div>
 
-        {/* Glow separator */}
         <div className="glow-separator shrink-0" />
 
-        {/* Row 2: Forex + Gold (45%) */}
-        <div className="flex-[45] min-h-0 flex gap-1.5">
-          {/* Forex (60%) */}
-          <div className="flex-[60] min-h-0 rounded-xl overflow-hidden gradient-border-emerald"
+        {/* ═══ ROW 2: Stocks + Forex + Gold (35%) ═══ */}
+        <div className="flex-[35] min-h-0 flex gap-1">
+          {/* Indonesian Stocks (35%) */}
+          <div className="flex-[35] min-h-0 rounded-xl overflow-hidden"
+            style={{ background: 'rgba(10, 10, 12, 0.8)', border: '1px solid rgba(6, 182, 212, 0.15)' }}>
+            <StocksPanel />
+          </div>
+          {/* Forex (35%) */}
+          <div className="flex-[35] min-h-0 rounded-xl overflow-hidden gradient-border-emerald"
             style={{ background: 'rgba(10, 10, 12, 0.8)' }}>
             <ForexGrid />
           </div>
-          {/* Gold (40%) */}
-          <div className="flex-[40] min-h-0 rounded-xl overflow-hidden"
-            style={{ background: 'rgba(10, 10, 12, 0.8)' }}>
+          {/* Gold (30%) */}
+          <div className="flex-[30] min-h-0 rounded-xl overflow-hidden"
+            style={{ background: 'rgba(10, 10, 12, 0.8)', border: '1px solid rgba(234, 179, 8, 0.15)' }}>
             <GoldPanel />
+          </div>
+        </div>
+
+        <div className="glow-separator shrink-0" />
+
+        {/* ═══ ROW 3: Global Indices + Commodities (20%) ═══ */}
+        <div className="flex-[20] min-h-0 flex gap-1">
+          {/* Global Indices (55%) */}
+          <div className="flex-[55] min-h-0 rounded-xl overflow-hidden"
+            style={{ background: 'rgba(10, 10, 12, 0.8)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
+            <GlobalIndices />
+          </div>
+          {/* Commodities (45%) */}
+          <div className="flex-[45] min-h-0 rounded-xl overflow-hidden"
+            style={{ background: 'rgba(10, 10, 12, 0.8)', border: '1px solid rgba(249, 115, 22, 0.15)' }}>
+            <CommoditiesGrid />
           </div>
         </div>
       </div>
 
       {/* ── Bottom Bar ──────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-4 py-1 shrink-0 bg-[#0c0c0e] border-t border-zinc-800/30 text-[9px] text-zinc-700">
-        <span>Indodax &bull; ExchangeRate-API &bull; fawazahmed0/currency-api</span>
+        <span>Indodax &bull; Yahoo Finance &bull; ExchangeRate-API &bull; fawazahmed0/currency-api &bull; alternative.me</span>
         <span className="flex items-center gap-3">
-          <span>Crypto 10s &bull; Valas 60s &bull; Emas 5m</span>
+          <span>Crypto 10s &bull; Saham/Valas/Global 60s &bull; Emas 5m</span>
           <span className="text-zinc-600">|</span>
           <span className="text-zinc-600">Press <kbd className="px-1 py-0.5 bg-zinc-800/50 rounded text-[8px] text-zinc-500 font-mono">F</kbd> fullscreen</span>
         </span>

@@ -1,42 +1,36 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Activity } from 'lucide-react';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 interface ForexRate {
   currency: string;
   symbol: string;
+  flag: string;
+  label: string;
   rate_idr: number;
   rate_usd: number;
 }
 
 interface ForexResponse {
   base_usd_idr: number;
+  usd_change_pct: number;
+  usd_high: number;
+  usd_low: number;
   rates: ForexRate[];
   timestamp: number;
   stale: boolean;
 }
-
-// ── Currency config ───────────────────────────────────────────────────────────
-
-const CURRENCIES: { code: string; flag: string; label: string }[] = [
-  { code: 'USD', flag: '\u{1F1FA}\u{1F1F8}', label: 'Dollar AS' },
-  { code: 'EUR', flag: '\u{1F1EA}\u{1F1FA}', label: 'Euro' },
-  { code: 'GBP', flag: '\u{1F1EC}\u{1F1E7}', label: 'Poundsterling' },
-  { code: 'JPY', flag: '\u{1F1EF}\u{1F1F5}', label: 'Yen' },
-  { code: 'SGD', flag: '\u{1F1F8}\u{1F1EC}', label: 'Dollar SG' },
-  { code: 'CHF', flag: '\u{1F1E8}\u{1F1ED}', label: 'Franc' },
-  { code: 'CNY', flag: '\u{1F1E8}\u{1F1F3}', label: 'Yuan' },
-  { code: 'AUD', flag: '\u{1F1E6}\u{1F1FA}', label: 'Dollar AU' },
-];
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function ForexGrid() {
   const [data, setData] = useState<ForexRate[]>([]);
   const [usdIdr, setUsdIdr] = useState(0);
+  const [usdChangePct, setUsdChangePct] = useState(0);
+  const [usdHigh, setUsdHigh] = useState(0);
+  const [usdLow, setUsdLow] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
@@ -55,6 +49,9 @@ export function ForexGrid() {
 
       setData(json.rates);
       setUsdIdr(json.base_usd_idr);
+      setUsdChangePct(json.usd_change_pct);
+      setUsdHigh(json.usd_high);
+      setUsdLow(json.usd_low);
       setLoading(false);
       setError(null);
       hasLoadedRef.current = true;
@@ -75,6 +72,9 @@ export function ForexGrid() {
 
   const rateMap = new Map(data.map(r => [r.currency, r]));
 
+  // All non-USD currencies for the grid
+  const gridCurrencies = data.filter(r => r.currency !== 'USD');
+
   if (loading && !error) {
     return (
       <div className="h-full flex flex-col p-3 gap-2">
@@ -83,8 +83,8 @@ export function ForexGrid() {
           <div className="skeleton-shimmer h-2 w-16 rounded" />
         </div>
         <div className="skeleton-shimmer h-12 rounded-xl" />
-        <div className="flex-1 grid grid-cols-4 grid-rows-2 gap-1.5">
-          {[1,2,3,4,5,6,7].map(i => (
+        <div className="flex-1 grid grid-cols-3 gap-1">
+          {[1,2,3,4,5,6,7,8,9].map(i => (
             <div key={i} className="skeleton-shimmer rounded-lg h-full" />
           ))}
         </div>
@@ -103,8 +103,11 @@ export function ForexGrid() {
     );
   }
 
+  const isUsdUp = usdChangePct > 0;
+  const isUsdDown = usdChangePct < 0;
+
   return (
-    <div className="h-full flex flex-col p-2.5 gap-2">
+    <div className="h-full flex flex-col p-2 gap-1.5">
       {/* Section header */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
@@ -120,47 +123,56 @@ export function ForexGrid() {
 
       {/* USD/IDR Hero Banner */}
       {usdIdr > 0 && (
-        <div className="rounded-xl px-4 py-2.5 flex items-center justify-between relative overflow-hidden"
+        <div className="rounded-xl px-3 py-2 flex items-center justify-between relative overflow-hidden"
           style={{
             background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.03) 50%, rgba(6, 95, 70, 0.08) 100%)',
             border: '1px solid rgba(16, 185, 129, 0.2)',
           }}
         >
-          {/* Animated glow line at top */}
           <div className="absolute top-0 left-0 right-0 h-[1px]"
-            style={{
-              background: 'linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.5), transparent)',
-            }}
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.5), transparent)' }}
           />
-          <div className="flex items-center gap-3">
-            <span className="text-xl">{'\u{1F1FA}\u{1F1F8}'}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-base">{'\u{1F1FA}\u{1F1F8}'}</span>
             <div>
-              <span className="font-bold text-white text-sm">USD / IDR</span>
-              <span className="text-[9px] text-emerald-400/60 ml-2 font-medium">BENCHMARK</span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-white text-[11px]">USD / IDR</span>
+                <span className={`px-1 py-0 rounded text-[8px] font-bold tabular-nums ${
+                  isUsdUp ? 'bg-green-500/15 text-green-400' : isUsdDown ? 'bg-red-500/15 text-red-400' : 'bg-zinc-800/40 text-zinc-500'
+                }`}>
+                  {isUsdUp ? '\u25B2' : isUsdDown ? '\u25BC' : '\u25CF'} {isUsdUp ? '+' : ''}{usdChangePct.toFixed(2)}%
+                </span>
+              </div>
+              {usdHigh > 0 && usdLow > 0 && (
+                <div className="text-[8px] text-zinc-600 mt-0.5">
+                  H: {new Intl.NumberFormat('id-ID').format(usdHigh)} &middot; L: {new Intl.NumberFormat('id-ID').format(usdLow)}
+                </div>
+              )}
             </div>
           </div>
-          <span className="font-mono text-xl font-bold text-emerald-300 tabular-nums tracking-wide" key={tick}>
+          <span className="font-mono text-lg font-bold text-emerald-300 tabular-nums tracking-wide" key={tick}>
             {new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(usdIdr)}
           </span>
         </div>
       )}
 
-      {/* Currency grid */}
-      <div className="flex-1 grid grid-cols-4 grid-rows-2 gap-1.5 min-h-0">
-        {CURRENCIES.filter(c => c.code !== 'USD').map(({ code, flag, label }) => {
-          const rate = rateMap.get(code);
+      {/* Currency grid — 3 columns × 3 rows */}
+      <div className="flex-1 grid grid-cols-3 gap-1 min-h-0">
+        {gridCurrencies.map(({ currency, flag, label }) => {
+          const rate = rateMap.get(currency);
           return (
             <div
-              key={code}
-              className="rounded-lg border border-zinc-800/30 bg-zinc-900/30 px-2.5 py-2 flex flex-col justify-center hover:bg-zinc-800/30 hover:border-zinc-700/40 transition-all duration-200 group"
+              key={currency}
+              className="rounded-lg border border-zinc-800/20 bg-zinc-900/20 px-2 py-1.5 flex items-center justify-between hover:bg-zinc-800/20 hover:border-zinc-700/30 transition-all duration-200"
             >
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-sm group-hover:scale-110 transition-transform duration-200">{flag}</span>
-                <span className="text-[10px] font-bold text-zinc-400 tracking-wide">{code}</span>
-                <span className="text-[8px] text-zinc-700 ml-auto">/IDR</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs">{flag}</span>
+                <div>
+                  <span className="text-[10px] font-bold text-zinc-400 tracking-wide">{currency}</span>
+                </div>
               </div>
               {rate ? (
-                <span className="font-mono text-[13px] font-semibold text-white tabular-nums" key={tick}>
+                <span className="font-mono text-[11px] font-semibold text-white tabular-nums" key={tick}>
                   {new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(rate.rate_idr)}
                 </span>
               ) : (
