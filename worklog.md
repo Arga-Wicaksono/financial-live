@@ -53,3 +53,25 @@ Stage Summary:
 - Ticker tape scrolling untuk crypto prices
 - Status bar menunjukkan kesehatan setiap data feed
 - Keyboard shortcut F untuk fullscreen mode (OBS-friendly)
+
+---
+Task ID: 7
+Agent: main
+Task: Fix crypto data loading issue + redesign layout for YouTube (no-scroll)
+
+Work Log:
+- Diagnosa masalah: useCallback dependency pada `data.length` menyebabkan fetchData reference berubah setelah setData, interval di-reset dan useEffect re-run berulang
+- Fix CryptoCards: ganti useCallback dependency dari [data.length] ke [], gunakan hasLoadedRef untuk track state
+- Fix ForexGrid: pola yang sama, tambah error state + retry button
+- Fix GoldPanel: pola yang sama, tambah error state + retry button
+- Redesign page.tsx layout untuk YouTube/OBS: semua data muat dalam 1 viewport tanpa scroll
+- Layout baru: Top bar (title+clock+status), Main area (Crypto 55% + Forex/Gold 45% side-by-side), Bottom bar
+- Rounded card borders untuk visual separation yang lebih baik
+- Optimized spacing untuk 1920x1080 YouTube capture
+
+Stage Summary:
+- Semua 3 komponen (CryptoCards, ForexGrid, GoldPanel) menggunakan pola fetch yang stabil
+- Error handling: menampilkan pesan error + tombol "Coba lagi" jika fetch gagal
+- Build berhasil tanpa error
+- Layout compact, all-in-one-viewport, optimized untuk OBS/YouTube live streaming
+- Semua API routes verified working: Crypto 7 pairs, Forex 8 rates, Gold prices
