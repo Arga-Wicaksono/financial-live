@@ -22,3 +22,22 @@ Stage Summary:
 - 6 commodities: WTI, Brent, Emas, Perak, Paladium, Tembaga
 - 5 global indices: S&P 500, Dow Jones, Nasdaq, Nikkei 225, Hang Seng
 - Layout: no-scroll 1920x1080, 3 rows with glow separators
+
+---
+Task ID: 2
+Agent: Main
+Task: Add RSS news ticker at the bottom of the dashboard
+
+Work Log:
+- Created /api/market/news/route.ts: fetches RSS from CNBC Indonesia (Market + Investment) and Tempo (Ekonomi)
+- Built lightweight RSS parser (no external deps) - regex-based XML item extraction
+- Created NewsTicker component: horizontal scrolling bar with category badges, clickable headlines
+- Added animate-news-ticker CSS (120s scroll loop, pause on hover)
+- Integrated into page.tsx between main content and bottom attribution bar
+- Verified: 30 headlines fetched successfully from CNBC Indonesia + Tempo
+
+Stage Summary:
+- News sources: CNBC Indonesia Market, CNBC Indonesia Investment, Tempo Ekonomi
+- Up to 30 deduplicated headlines, auto-refresh every 2 minutes
+- Color-coded category badges: Market (cyan), Investasi (purple), Ekonomi (blue)
+- Scroll animation: 120s loop, pauses on hover

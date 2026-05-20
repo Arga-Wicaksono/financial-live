@@ -468,3 +468,18 @@
   border-radius: 2px;
   transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+/* ── News Ticker ──────────────────────────────────────────────────────────── */
+
+@keyframes news-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-news-ticker {
+  animation: news-scroll 120s linear infinite;
+}
+
+.animate-news-ticker:hover {
+  animation-play-state: paused;
+}
