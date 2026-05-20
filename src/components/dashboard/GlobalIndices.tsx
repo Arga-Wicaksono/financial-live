@@ -26,7 +26,6 @@ interface IndicesResponse {
 function formatPrice(n: number): string {
   if (n === 0) return '-';
   if (n >= 10000) return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n);
-  if (n >= 100) return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
   return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 }
 
@@ -75,12 +74,12 @@ export function GlobalIndices() {
 
   if (loading && !error) {
     return (
-      <div className="h-full flex flex-col p-2.5 gap-1.5">
+      <div className="h-full flex flex-col p-2 gap-1.5">
         <div className="flex items-center gap-2 px-1">
           <div className="skeleton-shimmer h-3 w-24 rounded" />
         </div>
         <div className="flex-1 flex flex-col gap-1">
-          {[1, 2, 3, 4, 5].map(i => <div key={i} className="skeleton-shimmer rounded-lg h-8" />)}
+          {[1, 2, 3, 4, 5].map(i => <div key={i} className="skeleton-shimmer rounded-lg h-10" />)}
         </div>
       </div>
     );
@@ -98,12 +97,12 @@ export function GlobalIndices() {
   }
 
   return (
-    <div className="h-full flex flex-col p-2.5 gap-1.5">
+    <div className="h-full flex flex-col p-2 gap-1.5">
       {/* Section header */}
-      <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between px-0.5">
+        <div className="flex items-center gap-1.5">
           <div className="w-1 h-4 rounded-full bg-blue-500" />
-          <span className="text-[11px] font-bold text-blue-400/90 tracking-widest uppercase">Indeks Global</span>
+          <span className="text-[10px] font-bold text-blue-400/90 tracking-widest uppercase">Indeks Global</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-blue-500 live-dot-pulse" />
@@ -119,23 +118,29 @@ export function GlobalIndices() {
           const info = REGION_FLAGS[item.name] || { flag: '\u{1F310}', region: '' };
 
           return (
-            <div key={item.symbol} className="rounded-lg px-2 py-1.5 flex items-center justify-between border border-zinc-800/20 bg-zinc-900/20 hover:bg-zinc-800/20 transition-all duration-200">
+            <div key={item.symbol} className="rounded-lg px-2.5 py-2 flex items-center justify-between border border-zinc-800/20 bg-zinc-900/20 hover:bg-zinc-800/25 transition-all duration-200 flex-1 min-h-0">
               <div className="flex items-center gap-2">
-                <span className="text-xs">{info.flag}</span>
+                <span className="text-sm">{info.flag}</span>
                 <div>
-                  <span className="text-[10px] font-bold text-zinc-300 tracking-wide">{item.name}</span>
-                  {info.region && <span className="text-[8px] text-zinc-700 ml-1.5">{info.region}</span>}
+                  <span className="text-[11px] font-bold text-zinc-300 tracking-wide block leading-tight">{item.name}</span>
+                  <div className="flex items-center gap-2 text-[7px] text-zinc-600 mt-0.5">
+                    {info.region && <span>{info.region}</span>}
+                    <span>H: {formatPrice(item.high)}</span>
+                    <span>L: {formatPrice(item.low)}</span>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2.5">
-                <span className="font-mono text-[11px] font-semibold text-white tabular-nums">
-                  {formatPrice(item.price)}
-                </span>
-                <span className={`text-[9px] font-bold tabular-nums w-14 text-right ${
-                  isUp ? 'text-green-400' : isDown ? 'text-red-400' : 'text-zinc-500'
-                }`}>
-                  {isUp ? '\u25B2' : isDown ? '\u25BC' : '\u25CF'} {isUp ? '+' : ''}{item.change_pct.toFixed(2)}%
-                </span>
+              <div className="flex items-center gap-3 text-right">
+                <div>
+                  <span className="font-mono text-xs font-semibold text-white tabular-nums block leading-tight">
+                    {formatPrice(item.price)}
+                  </span>
+                  <span className={`text-[9px] font-bold tabular-nums block leading-tight mt-0.5 ${
+                    isUp ? 'text-green-400' : isDown ? 'text-red-400' : 'text-zinc-500'
+                  }`}>
+                    {isUp ? '\u25B2' : isDown ? '\u25BC' : '\u25CF'} {isUp ? '+' : ''}{item.change_pct.toFixed(2)}%
+                  </span>
+                </div>
               </div>
             </div>
           );

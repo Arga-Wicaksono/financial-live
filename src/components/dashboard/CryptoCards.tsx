@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { PriceCell } from './PriceCell';
-import { Activity } from 'lucide-react';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -68,7 +67,7 @@ function MiniPriceBar({ low, high, last }: { low: number; high: number; last: nu
   const color = isUp ? 'bg-green-500' : 'bg-red-400';
 
   return (
-    <div className="mini-bar-track mt-1.5">
+    <div className="mini-bar-track mt-1">
       <div
         className="mini-bar-fill bg-gradient-to-r from-red-400/50 via-zinc-500/50 to-green-500/50"
         style={{ left: '0%', width: '100%' }}
@@ -86,7 +85,7 @@ function MiniPriceBar({ low, high, last }: { low: number; high: number; last: nu
 function VolumeBar({ vol, maxVol }: { vol: number; maxVol: number }) {
   const pct = maxVol > 0 ? Math.max(5, (vol / maxVol) * 100) : 5;
   return (
-    <div className="vol-bar mt-1">
+    <div className="vol-bar mt-0.5">
       <div
         className="vol-bar-fill bg-gradient-to-r from-amber-500/60 to-amber-400/40"
         style={{ width: `${pct}%` }}
@@ -95,9 +94,9 @@ function VolumeBar({ vol, maxVol }: { vol: number; maxVol: number }) {
   );
 }
 
-// ── Single Crypto Card ─────────────────────────────────────────────────────────
+// ── Compact Crypto Card (single row layout) ────────────────────────────────────
 
-function CryptoCard({ item, dir, tick }: { item: CryptoPairData; dir?: Direction; tick: number }) {
+function CryptoCard({ item, dir, tick, showVolume }: { item: CryptoPairData; dir?: Direction; tick: number; showVolume?: boolean }) {
   const icon = ICONS[item.name] || '\u25CF';
   const iconColor = ICON_COLORS[item.name] || 'text-zinc-400';
   const isUp = item.change_pct > 0;
@@ -110,20 +109,19 @@ function CryptoCard({ item, dir, tick }: { item: CryptoPairData; dir?: Direction
       : '';
 
   return (
-    <div className={`rounded-xl p-3 flex flex-col justify-between transition-all duration-300 relative overflow-hidden bg-zinc-900/40 border border-zinc-800/30 hover:border-zinc-700/40 ${cardAnim}`}>
-      {/* Top row: Name + Change Badge */}
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-zinc-800/60 flex items-center justify-center">
-            <span className={`text-base leading-none ${iconColor}`}>{icon}</span>
+    <div className={`rounded-lg px-2.5 py-2 flex flex-col justify-between transition-all duration-300 relative overflow-hidden bg-zinc-900/40 border border-zinc-800/30 hover:border-zinc-700/50 h-full ${cardAnim}`}>
+      {/* Top: Icon + Name + Change */}
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-1.5">
+          <div className="w-6 h-6 rounded-md bg-zinc-800/60 flex items-center justify-center shrink-0">
+            <span className={`text-sm leading-none ${iconColor}`}>{icon}</span>
           </div>
           <div>
-            <span className="font-bold text-white text-sm tracking-wide">{item.name}</span>
-            <span className="text-zinc-600 text-[10px] font-normal block">/IDR</span>
+            <span className="font-bold text-white text-xs tracking-wide">{item.name}</span>
+            <span className="text-zinc-600 text-[9px] font-normal block leading-none">/IDR</span>
           </div>
         </div>
-        {/* Change badge */}
-        <div className={`px-2 py-0.5 rounded-md text-[11px] font-bold tabular-nums ${
+        <div className={`px-1.5 py-0.5 rounded text-[10px] font-bold tabular-nums ${
           isUp
             ? 'bg-green-500/15 text-green-400 border border-green-500/20'
             : isDown
@@ -135,35 +133,40 @@ function CryptoCard({ item, dir, tick }: { item: CryptoPairData; dir?: Direction
         </div>
       </div>
 
-      {/* Price — large and prominent */}
+      {/* Price */}
       <div className="mb-1">
         <PriceCell
           key={`price-${item.pair}-${tick}`}
           value={item.last}
           format="currency"
           decimals={0}
-          className="text-lg font-bold tabular-nums"
+          className="text-sm font-bold tabular-nums"
           direction={dir}
         />
       </div>
 
-      {/* Mini price range bar */}
+      {/* Price range bar */}
       <MiniPriceBar low={item.low} high={item.high} last={item.last} />
 
-      {/* Bid/Ask row */}
-      <div className="flex items-center justify-between mt-2 text-[10px]">
+      {/* Bid/Ask + Volume */}
+      <div className="flex items-center justify-between mt-1.5 text-[9px]">
         <div>
-          <span className="text-zinc-600">Beli </span>
+          <span className="text-zinc-600">B </span>
           <span className="text-green-400/80 tabular-nums font-medium">
-            {new Intl.NumberFormat('id-ID').format(item.buy)}
+            {new Intl.NumberFormat('id-ID', { notation: 'compact', maximumFractionDigits: 1 }).format(item.buy)}
           </span>
         </div>
         <div>
-          <span className="text-zinc-600">Jual </span>
+          <span className="text-zinc-600">J </span>
           <span className="text-red-400/80 tabular-nums font-medium">
-            {new Intl.NumberFormat('id-ID').format(item.sell)}
+            {new Intl.NumberFormat('id-ID', { notation: 'compact', maximumFractionDigits: 1 }).format(item.sell)}
           </span>
         </div>
+        {showVolume && (
+          <div className="text-zinc-500 tabular-nums">
+            V: {formatVol(item.vol_idr)}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -226,30 +229,18 @@ export function CryptoCards() {
 
   if (loading && !error) {
     return (
-      <div className="h-full flex flex-col p-3 gap-2">
-        {/* Shimmer skeleton */}
+      <div className="h-full flex flex-col p-2 gap-2">
         <div className="flex items-center gap-2 px-1">
           <div className="skeleton-shimmer h-3 w-20 rounded" />
           <div className="skeleton-shimmer h-2 w-16 rounded" />
         </div>
-        <div className="flex-[1] grid grid-cols-4 gap-2">
-          {[1,2,3,4].map(i => (
-            <div key={i} className="rounded-xl p-3 bg-zinc-900/40 border border-zinc-800/20">
-              <div className="skeleton-shimmer h-4 w-12 rounded mb-2" />
-              <div className="skeleton-shimmer h-5 w-28 rounded mb-2" />
-              <div className="skeleton-shimmer h-2 w-full rounded mb-3" />
-              <div className="flex justify-between">
-                <div className="skeleton-shimmer h-3 w-16 rounded" />
-                <div className="skeleton-shimmer h-3 w-16 rounded" />
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="flex-[1] grid grid-cols-4 gap-2">
-          {[1,2,3,4].map(i => (
-            <div key={i} className="rounded-xl p-3 bg-zinc-900/40 border border-zinc-800/20">
-              <div className="skeleton-shimmer h-4 w-12 rounded mb-2" />
-              <div className="skeleton-shimmer h-5 w-24 rounded" />
+        <div className="flex-1 grid grid-cols-7 gap-1.5">
+          {[1,2,3,4,5,6,7].map(i => (
+            <div key={i} className="rounded-lg p-2 bg-zinc-900/40 border border-zinc-800/20">
+              <div className="skeleton-shimmer h-3 w-10 rounded mb-1.5" />
+              <div className="skeleton-shimmer h-4 w-20 rounded mb-1.5" />
+              <div className="skeleton-shimmer h-1.5 w-full rounded mb-1.5" />
+              <div className="skeleton-shimmer h-2.5 w-full rounded" />
             </div>
           ))}
         </div>
@@ -268,11 +259,8 @@ export function CryptoCards() {
     );
   }
 
-  const topRow = data.slice(0, 4);
-  const bottomRow = data.slice(4, 7);
-
   return (
-    <div className="h-full flex flex-col p-2.5 gap-2">
+    <div className="h-full flex flex-col p-2 gap-2">
       {/* Section header */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
@@ -280,39 +268,35 @@ export function CryptoCards() {
           <span className="text-[11px] font-bold text-amber-400/90 tracking-widest uppercase">Crypto / IDR</span>
           <span className="text-[9px] text-zinc-700 font-mono">Indodax</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-500 live-dot-pulse" />
-          <span className="text-[9px] text-zinc-600 font-mono">10s</span>
-        </div>
-      </div>
-
-      {/* Top row: 4 main crypto cards */}
-      <div className="flex-[1] grid grid-cols-4 gap-2 min-h-0">
-        {topRow.map(item => (
-          <CryptoCard key={item.pair} item={item} dir={directions.get(item.pair)} tick={tick} />
-        ))}
-      </div>
-
-      {/* Bottom row: 3 cards + volume overview */}
-      <div className="flex-[1] grid grid-cols-4 gap-2 min-h-0">
-        {bottomRow.map(item => (
-          <CryptoCard key={item.pair} item={item} dir={directions.get(item.pair)} tick={tick} />
-        ))}
-        {/* Volume overview card */}
-        <div className="rounded-xl p-3 bg-zinc-900/40 border border-zinc-800/20 flex flex-col justify-between">
-          <span className="text-[9px] text-zinc-600 uppercase tracking-wider font-semibold">Volume 24h</span>
-          <div className="flex-1 flex flex-col justify-center gap-1.5 mt-2">
+        <div className="flex items-center gap-3">
+          {/* Volume summary inline */}
+          <div className="flex items-center gap-2">
             {data.slice(0, 4).map(item => (
-              <div key={item.pair} className="space-y-0.5">
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className={`font-bold ${ICON_COLORS[item.name] || 'text-zinc-400'}`}>{item.name}</span>
-                  <span className="text-zinc-400 tabular-nums">{formatVol(item.vol_idr)}</span>
-                </div>
+              <div key={item.pair} className="flex items-center gap-1">
+                <span className={`text-[9px] font-bold ${ICON_COLORS[item.name] || 'text-zinc-400'}`}>{item.name}</span>
+                <span className="text-[9px] text-zinc-500 tabular-nums">{formatVol(item.vol_idr)}</span>
                 <VolumeBar vol={item.vol_idr} maxVol={maxVol} />
               </div>
             ))}
           </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 live-dot-pulse" />
+            <span className="text-[9px] text-zinc-600 font-mono">10s</span>
+          </div>
         </div>
+      </div>
+
+      {/* Single row: 7 crypto cards */}
+      <div className="flex-1 grid grid-cols-7 gap-1.5 min-h-0">
+        {data.map(item => (
+          <CryptoCard
+            key={item.pair}
+            item={item}
+            dir={directions.get(item.pair)}
+            tick={tick}
+            showVolume={true}
+          />
+        ))}
       </div>
     </div>
   );

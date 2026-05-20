@@ -170,20 +170,18 @@ export default function TradingDashboard() {
       </div>
 
       {/* ── Main Content ────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-h-0 p-1 gap-1">
+      <div className="flex-1 flex flex-col min-h-0 p-1.5 gap-1.5">
 
-        {/* ═══ ROW 1: Crypto (top priority, 45%) ═══ */}
-        <div className="flex-[45] min-h-0 rounded-xl overflow-hidden gradient-border-amber"
+        {/* ═══ ROW 1: Crypto (28%) ═══ */}
+        <div className="flex-[28] min-h-0 rounded-xl overflow-hidden gradient-border-amber"
           style={{ background: 'rgba(10, 10, 12, 0.8)' }}>
           <CryptoCards />
         </div>
 
-        <div className="glow-separator shrink-0" />
-
-        {/* ═══ ROW 2: Stocks + Forex + Gold (35%) ═══ */}
-        <div className="flex-[35] min-h-0 flex gap-1">
-          {/* Indonesian Stocks (35%) */}
-          <div className="flex-[35] min-h-0 rounded-xl overflow-hidden"
+        {/* ═══ ROW 2: Stocks + Forex + Gold (42%) ═══ */}
+        <div className="flex-[42] min-h-0 flex gap-1.5">
+          {/* Indonesian Stocks (38%) */}
+          <div className="flex-[38] min-h-0 rounded-xl overflow-hidden"
             style={{ background: 'rgba(10, 10, 12, 0.8)', border: '1px solid rgba(6, 182, 212, 0.15)' }}>
             <StocksPanel />
           </div>
@@ -192,24 +190,22 @@ export default function TradingDashboard() {
             style={{ background: 'rgba(10, 10, 12, 0.8)' }}>
             <ForexGrid />
           </div>
-          {/* Gold (30%) */}
-          <div className="flex-[30] min-h-0 rounded-xl overflow-hidden"
+          {/* Gold (27%) */}
+          <div className="flex-[27] min-h-0 rounded-xl overflow-hidden"
             style={{ background: 'rgba(10, 10, 12, 0.8)', border: '1px solid rgba(234, 179, 8, 0.15)' }}>
             <GoldPanel />
           </div>
         </div>
 
-        <div className="glow-separator shrink-0" />
-
-        {/* ═══ ROW 3: Global Indices + Commodities (20%) ═══ */}
-        <div className="flex-[20] min-h-0 flex gap-1">
-          {/* Global Indices (55%) */}
-          <div className="flex-[55] min-h-0 rounded-xl overflow-hidden"
+        {/* ═══ ROW 3: Global Indices + Commodities (30%) ═══ */}
+        <div className="flex-[30] min-h-0 flex gap-1.5">
+          {/* Global Indices (50%) */}
+          <div className="flex-1 min-h-0 rounded-xl overflow-hidden"
             style={{ background: 'rgba(10, 10, 12, 0.8)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
             <GlobalIndices />
           </div>
-          {/* Commodities (45%) */}
-          <div className="flex-[45] min-h-0 rounded-xl overflow-hidden"
+          {/* Commodities (50%) */}
+          <div className="flex-1 min-h-0 rounded-xl overflow-hidden"
             style={{ background: 'rgba(10, 10, 12, 0.8)', border: '1px solid rgba(249, 115, 22, 0.15)' }}>
             <CommoditiesGrid />
           </div>

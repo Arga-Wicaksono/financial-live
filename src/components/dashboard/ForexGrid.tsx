@@ -71,21 +71,18 @@ export function ForexGrid() {
   }, [fetchData]);
 
   const rateMap = new Map(data.map(r => [r.currency, r]));
-
-  // All non-USD currencies for the grid
   const gridCurrencies = data.filter(r => r.currency !== 'USD');
 
   if (loading && !error) {
     return (
-      <div className="h-full flex flex-col p-3 gap-2">
+      <div className="h-full flex flex-col p-2 gap-1.5">
         <div className="flex items-center gap-2 px-1">
           <div className="skeleton-shimmer h-3 w-20 rounded" />
-          <div className="skeleton-shimmer h-2 w-16 rounded" />
         </div>
-        <div className="skeleton-shimmer h-12 rounded-xl" />
+        <div className="skeleton-shimmer h-12 rounded-lg" />
         <div className="flex-1 grid grid-cols-3 gap-1">
           {[1,2,3,4,5,6,7,8,9].map(i => (
-            <div key={i} className="skeleton-shimmer rounded-lg h-full" />
+            <div key={i} className="skeleton-shimmer rounded-md h-full" />
           ))}
         </div>
       </div>
@@ -109,10 +106,10 @@ export function ForexGrid() {
   return (
     <div className="h-full flex flex-col p-2 gap-1.5">
       {/* Section header */}
-      <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between px-0.5">
+        <div className="flex items-center gap-1.5">
           <div className="w-1 h-4 rounded-full bg-emerald-500" />
-          <span className="text-[11px] font-bold text-emerald-400/90 tracking-widest uppercase">Valas / IDR</span>
+          <span className="text-[10px] font-bold text-emerald-400/90 tracking-widest uppercase">Valas / IDR</span>
           <span className="text-[9px] text-zinc-700 font-mono">Kurs</span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -123,7 +120,7 @@ export function ForexGrid() {
 
       {/* USD/IDR Hero Banner */}
       {usdIdr > 0 && (
-        <div className="rounded-xl px-3 py-2 flex items-center justify-between relative overflow-hidden"
+        <div className="rounded-lg px-3 py-2 flex items-center justify-between relative overflow-hidden"
           style={{
             background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.03) 50%, rgba(6, 95, 70, 0.08) 100%)',
             border: '1px solid rgba(16, 185, 129, 0.2)',
@@ -133,7 +130,7 @@ export function ForexGrid() {
             style={{ background: 'linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.5), transparent)' }}
           />
           <div className="flex items-center gap-2">
-            <span className="text-base">{'\u{1F1FA}\u{1F1F8}'}</span>
+            <span className="text-sm">{'\u{1F1FA}\u{1F1F8}'}</span>
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-bold text-white text-[11px]">USD / IDR</span>
@@ -150,25 +147,26 @@ export function ForexGrid() {
               )}
             </div>
           </div>
-          <span className="font-mono text-lg font-bold text-emerald-300 tabular-nums tracking-wide" key={tick}>
+          <span className="font-mono text-base font-bold text-emerald-300 tabular-nums tracking-wide" key={tick}>
             {new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(usdIdr)}
           </span>
         </div>
       )}
 
-      {/* Currency grid — 3 columns × 3 rows */}
+      {/* Currency grid — 3 columns */}
       <div className="flex-1 grid grid-cols-3 gap-1 min-h-0">
         {gridCurrencies.map(({ currency, flag, label }) => {
           const rate = rateMap.get(currency);
           return (
             <div
               key={currency}
-              className="rounded-lg border border-zinc-800/20 bg-zinc-900/20 px-2 py-1.5 flex items-center justify-between hover:bg-zinc-800/20 hover:border-zinc-700/30 transition-all duration-200"
+              className="rounded-md border border-zinc-800/20 bg-zinc-900/20 px-2 py-1.5 flex items-center justify-between hover:bg-zinc-800/25 hover:border-zinc-700/30 transition-all duration-200"
             >
               <div className="flex items-center gap-1.5">
                 <span className="text-xs">{flag}</span>
                 <div>
                   <span className="text-[10px] font-bold text-zinc-400 tracking-wide">{currency}</span>
+                  {label && <span className="text-[7px] text-zinc-600 block">{label}</span>}
                 </div>
               </div>
               {rate ? (

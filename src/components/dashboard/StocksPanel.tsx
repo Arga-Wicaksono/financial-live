@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { PriceCell } from './PriceCell';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -47,49 +47,51 @@ function IndexCard({ item }: { item: StockItem }) {
   const isDown = item.change_pct < 0;
 
   return (
-    <div className="rounded-xl px-3 py-2 flex flex-col justify-between border border-zinc-800/30 bg-zinc-900/30 hover:bg-zinc-800/30 transition-all duration-200">
-      <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-1.5">
-          <div className="w-1 h-3 rounded-full bg-cyan-500" />
-          <span className="text-[10px] font-bold text-zinc-300 tracking-wider">{item.name}</span>
-        </div>
-        <div className={`px-1.5 py-0.5 rounded text-[9px] font-bold tabular-nums ${
-          isUp ? 'bg-green-500/15 text-green-400' : isDown ? 'bg-red-500/15 text-red-400' : 'bg-zinc-800/40 text-zinc-500'
-        }`}>
-          {isUp ? '\u25B2' : isDown ? '\u25BC' : '\u25CF'} {isUp ? '+' : ''}{item.change_pct.toFixed(2)}%
+    <div className="rounded-lg px-2.5 py-1.5 flex items-center justify-between border border-zinc-800/30 bg-zinc-900/30 hover:bg-zinc-800/30 transition-all duration-200">
+      <div className="flex items-center gap-1.5">
+        <div className="w-1 h-3.5 rounded-full bg-cyan-500" />
+        <div>
+          <span className="text-[10px] font-bold text-zinc-300 tracking-wider block leading-tight">{item.name}</span>
+          <div className="flex items-center gap-2 text-[7px] text-zinc-600 mt-0.5">
+            <span>H: {formatLargeNum(item.high)}</span>
+            <span>L: {formatLargeNum(item.low)}</span>
+            <span>V: {formatVol(item.volume)}</span>
+          </div>
         </div>
       </div>
-      <span className="font-mono text-lg font-bold text-white tabular-nums">
-        {formatLargeNum(item.price)}
-      </span>
-      <div className="flex items-center justify-between mt-1 text-[8px] text-zinc-600">
-        <span>H: {formatLargeNum(item.high)}</span>
-        <span>L: {formatLargeNum(item.low)}</span>
-        <span>V: {formatVol(item.volume)}</span>
+      <div className="text-right">
+        <span className="font-mono text-sm font-bold text-white tabular-nums block leading-tight">
+          {formatLargeNum(item.price)}
+        </span>
+        <span className={`text-[9px] font-bold tabular-nums block leading-tight mt-0.5 ${
+          isUp ? 'text-green-400' : isDown ? 'text-red-400' : 'text-zinc-500'
+        }`}>
+          {isUp ? '\u25B2' : isDown ? '\u25BC' : '\u25CF'} {isUp ? '+' : ''}{item.change_pct.toFixed(2)}%
+        </span>
       </div>
     </div>
   );
 }
 
-// ── Blue-chip Card ─────────────────────────────────────────────────────────────
+// ── Blue-chip Row ──────────────────────────────────────────────────────────────
 
-function BluechipCard({ item }: { item: StockItem }) {
+function BluechipRow({ item }: { item: StockItem }) {
   const isUp = item.change_pct > 0;
   const isDown = item.change_pct < 0;
 
   return (
-    <div className="rounded-lg px-2 py-1.5 flex items-center justify-between border border-zinc-800/20 bg-zinc-900/20 hover:bg-zinc-800/20 transition-all duration-200">
+    <div className="rounded-md px-2 py-1.5 flex items-center justify-between border border-zinc-800/15 bg-zinc-900/15 hover:bg-zinc-800/25 transition-all duration-200">
       <div className="flex items-center gap-2">
-        <span className="text-[10px] font-bold text-cyan-400/90 tabular-nums">{item.name}</span>
+        <span className="text-[10px] font-bold text-cyan-400/90 tabular-nums tracking-wide">{item.name}</span>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <span className="font-mono text-[11px] font-semibold text-white tabular-nums">
           {formatLargeNum(item.price)}
         </span>
         <span className={`text-[9px] font-bold tabular-nums w-14 text-right ${
           isUp ? 'text-green-400' : isDown ? 'text-red-400' : 'text-zinc-500'
         }`}>
-          {isUp ? '+' : ''}{item.change_pct.toFixed(2)}%
+          {isUp ? '\u25B2' : isDown ? '\u25BC' : '\u25CF'} {isUp ? '+' : ''}{item.change_pct.toFixed(2)}%
         </span>
       </div>
     </div>
@@ -135,16 +137,15 @@ export function StocksPanel() {
 
   if (loading && !error) {
     return (
-      <div className="h-full flex flex-col p-2.5 gap-2">
+      <div className="h-full flex flex-col p-2 gap-1.5">
         <div className="flex items-center gap-2 px-1">
           <div className="skeleton-shimmer h-3 w-24 rounded" />
-          <div className="skeleton-shimmer h-2 w-16 rounded" />
         </div>
-        <div className="grid grid-cols-3 gap-1.5">
-          {[1, 2, 3].map(i => <div key={i} className="skeleton-shimmer rounded-xl h-16" />)}
+        <div className="grid grid-cols-3 gap-1">
+          {[1, 2, 3].map(i => <div key={i} className="skeleton-shimmer rounded-lg h-12" />)}
         </div>
-        <div className="flex-1 flex flex-col gap-1">
-          {[1, 2, 3, 4, 5].map(i => <div key={i} className="skeleton-shimmer rounded-lg h-6" />)}
+        <div className="flex-1 flex flex-col gap-0.5">
+          {[1, 2, 3, 4, 5].map(i => <div key={i} className="skeleton-shimmer rounded-md h-7" />)}
         </div>
       </div>
     );
@@ -162,12 +163,12 @@ export function StocksPanel() {
   }
 
   return (
-    <div className="h-full flex flex-col p-2.5 gap-1.5">
+    <div className="h-full flex flex-col p-2 gap-1.5">
       {/* Section header */}
-      <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between px-0.5">
+        <div className="flex items-center gap-1.5">
           <div className="w-1 h-4 rounded-full bg-cyan-500" />
-          <span className="text-[11px] font-bold text-cyan-400/90 tracking-widest uppercase">Saham Indonesia</span>
+          <span className="text-[10px] font-bold text-cyan-400/90 tracking-widest uppercase">Saham Indonesia</span>
           <span className="text-[9px] text-zinc-700 font-mono">BEI</span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -177,15 +178,15 @@ export function StocksPanel() {
       </div>
 
       {/* Index cards: IHSG, LQ45, IDX30 */}
-      <div className="grid grid-cols-3 gap-1.5">
+      <div className="grid grid-cols-3 gap-1">
         {indices.map(item => <IndexCard key={item.symbol} item={item} />)}
       </div>
 
       {/* Blue-chip stocks */}
-      <div className="flex-1 flex flex-col gap-1 min-h-0 overflow-hidden">
-        <div className="text-[8px] text-zinc-600 uppercase tracking-wider font-semibold px-1">Blue-Chip</div>
-        <div className="flex-1 flex flex-col gap-1 min-h-0">
-          {bluechips.map(item => <BluechipCard key={item.symbol} item={item} />)}
+      <div className="flex-1 flex flex-col gap-0.5 min-h-0 overflow-hidden">
+        <div className="text-[8px] text-zinc-600 uppercase tracking-wider font-semibold px-0.5 mt-0.5">Blue-Chip</div>
+        <div className="flex-1 flex flex-col gap-0.5 min-h-0">
+          {bluechips.map(item => <BluechipRow key={item.symbol} item={item} />)}
         </div>
       </div>
     </div>
