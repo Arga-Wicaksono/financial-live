@@ -51,4 +51,8 @@ prompt
 
 server.log
 # Skills directory
-/skills/
+/skills//upload/
+download/
+worklog.md
+server.log
+dev.log
