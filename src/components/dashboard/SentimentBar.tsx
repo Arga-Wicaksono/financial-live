@@ -59,36 +59,36 @@ export function SentimentBar() {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [fetchData]);
 
-  if (!data) return <span className="text-[9px] text-zinc-700">Fear & Greed --</span>;
+  if (!data) return <span className="text-[11px] text-zinc-700">Fear & Greed --</span>;
 
   const fng = data.fear_greed;
   const bi = data.bi_rate;
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-4">
       {/* Fear & Greed */}
       {fng.value > 0 && (
-        <div className="flex items-center gap-1.5">
-          <span className="text-[8px] text-zinc-600 uppercase tracking-wider font-semibold">Fear & Greed</span>
-          <div className="flex items-center gap-1.5 rounded-md px-1.5 py-0.5 bg-zinc-800/40 border border-zinc-800/30">
-            <div className="w-14 h-1 rounded-full bg-zinc-800/80 overflow-hidden">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-zinc-600 uppercase tracking-wider font-semibold">Fear & Greed</span>
+          <div className="flex items-center gap-2 rounded-md px-2 py-0.5 bg-zinc-800/40 border border-zinc-800/30">
+            <div className="w-16 h-1.5 rounded-full bg-zinc-800/80 overflow-hidden">
               <div
                 className={`h-full rounded-full ${getFngGauge(fng.value)} transition-all duration-500`}
                 style={{ width: `${fng.value}%` }}
               />
             </div>
-            <span className={`font-mono text-[10px] font-bold tabular-nums ${getFngColor(fng.value)}`}>
+            <span className={`font-mono text-xs font-bold tabular-nums ${getFngColor(fng.value)}`}>
               {fng.value}
             </span>
-            <span className="text-[7px] text-zinc-500 capitalize max-w-[42px] truncate">{fng.classification}</span>
+            <span className="text-[10px] text-zinc-500 capitalize max-w-[52px] truncate">{fng.classification}</span>
           </div>
         </div>
       )}
 
       {/* BI Rate */}
-      <div className="flex items-center gap-1.5">
-        <span className="text-[8px] text-zinc-600 uppercase tracking-wider font-semibold">BI Rate</span>
-        <span className="font-mono text-[10px] font-bold text-purple-400 tabular-nums bg-purple-500/10 border border-purple-500/15 rounded-md px-1.5 py-0.5">
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] text-zinc-600 uppercase tracking-wider font-semibold">BI Rate</span>
+        <span className="font-mono text-xs font-bold text-purple-400 tabular-nums bg-purple-500/10 border border-purple-500/15 rounded-md px-2 py-0.5">
           {bi.rate}%
         </span>
       </div>
