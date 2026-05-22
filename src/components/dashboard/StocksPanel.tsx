@@ -40,33 +40,26 @@ function fmtNum(n: number): string {
   return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(n);
 }
 
-// ── Index Card ─────────────────────────────────────────────────────────────────
+// ── Index Row (compact single-line) ────────────────────────────────────────────
 
-function IndexCard({ item }: { item: StockItem }) {
+function IndexRow({ item }: { item: StockItem }) {
   const isUp = item.change_pct > 0;
   const isDown = item.change_pct < 0;
 
   return (
-    <div className="rounded-lg px-3 py-2 flex items-center justify-between border border-zinc-800/25 bg-zinc-900/30 hover:bg-zinc-800/30 transition-all">
-      <div className="flex items-center gap-2 min-w-0 flex-1">
-        <div className="w-1 h-8 rounded-full bg-cyan-500 shrink-0" />
-        <div className="min-w-0 flex-1">
-          <span className="text-xs font-bold text-zinc-300 tracking-wider block leading-tight">{item.name}</span>
-          <div className="flex items-center gap-1.5 text-[10px] text-zinc-600 mt-0.5">
-            <span>H:{fmtNum(item.high)}</span>
-            <span>L:{fmtNum(item.low)}</span>
-            <span>V:{formatVol(item.volume)}</span>
-          </div>
-        </div>
+    <div className="rounded-md px-2 py-1 flex items-center justify-between border border-zinc-800/20 bg-zinc-900/30 hover:bg-zinc-800/30 transition-all">
+      <div className="flex items-center gap-1.5 min-w-0">
+        <span className="text-[11px] font-bold text-cyan-400/90 tracking-wider shrink-0">{item.name}</span>
+        <span className="text-[9px] text-zinc-700 shrink-0 hidden sm:inline">H:{fmtNum(item.high)} L:{fmtNum(item.low)}</span>
       </div>
-      <div className="text-right shrink-0 ml-2">
-        <span className="font-mono text-base font-bold text-white tabular-nums block leading-tight">
+      <div className="flex items-center gap-2 shrink-0 ml-1">
+        <span className="font-mono text-xs font-bold text-white tabular-nums">
           {fmtNum(item.price)}
         </span>
-        <span className={`text-xs font-bold tabular-nums block leading-tight ${
+        <span className={`text-[10px] font-bold tabular-nums w-14 text-right ${
           isUp ? 'text-green-400' : isDown ? 'text-red-400' : 'text-zinc-500'
         }`}>
-          {isUp ? '\u25B2' : isDown ? '\u25BC' : '\u25CF'} {isUp ? '+' : ''}{item.change_pct.toFixed(2)}%
+          {isUp ? '\u25B2' : isDown ? '\u25BC' : '\u25CF'}{isUp ? '+' : ''}{item.change_pct.toFixed(2)}%
         </span>
       </div>
     </div>
@@ -80,16 +73,16 @@ function BluechipRow({ item }: { item: StockItem }) {
   const isDown = item.change_pct < 0;
 
   return (
-    <div className="rounded-md px-3 py-1.5 flex items-center justify-between border border-zinc-800/15 bg-zinc-900/15 hover:bg-zinc-800/25 transition-all">
-      <span className="text-xs font-bold text-cyan-400/90 tabular-nums tracking-wider shrink-0">{item.name}</span>
-      <div className="flex items-center gap-3 shrink-0">
-        <span className="font-mono text-xs font-semibold text-white tabular-nums">
+    <div className="rounded-md px-2 py-1 flex items-center justify-between border border-zinc-800/15 bg-zinc-900/15 hover:bg-zinc-800/25 transition-all">
+      <span className="text-[11px] font-bold text-cyan-400/80 tabular-nums tracking-wider shrink-0">{item.name}</span>
+      <div className="flex items-center gap-2 shrink-0">
+        <span className="font-mono text-[11px] font-semibold text-white tabular-nums">
           {fmtNum(item.price)}
         </span>
-        <span className={`text-xs font-bold tabular-nums w-16 text-right ${
+        <span className={`text-[10px] font-bold tabular-nums w-14 text-right ${
           isUp ? 'text-green-400' : isDown ? 'text-red-400' : 'text-zinc-500'
         }`}>
-          {isUp ? '\u25B2' : isDown ? '\u25BC' : '\u25CF'} {isUp ? '+' : ''}{item.change_pct.toFixed(2)}%
+          {isUp ? '\u25B2' : isDown ? '\u25BC' : '\u25CF'}{isUp ? '+' : ''}{item.change_pct.toFixed(2)}%
         </span>
       </div>
     </div>
@@ -131,10 +124,11 @@ export function StocksPanel() {
 
   if (loading && !error) {
     return (
-      <div className="h-full flex flex-col p-3 gap-2">
+      <div className="h-full flex flex-col p-2.5 gap-1.5">
         <div className="skeleton-shimmer h-3 w-28 rounded" />
-        <div className="grid grid-cols-3 gap-1.5"><div className="skeleton-shimmer rounded-lg h-14" /><div className="skeleton-shimmer rounded-lg h-14" /><div className="skeleton-shimmer rounded-lg h-14" /></div>
-        <div className="flex-1 flex flex-col gap-1">{[1,2,3,4].map(i => <div key={i} className="skeleton-shimmer rounded-md h-7" />)}</div>
+        <div className="flex flex-col gap-1">{[1,2,3].map(i => <div key={i} className="skeleton-shimmer rounded-md h-6" />)}</div>
+        <div className="skeleton-shimmer h-2.5 w-16 rounded mt-1" />
+        <div className="flex-1 flex flex-col gap-1">{[1,2,3,4].map(i => <div key={i} className="skeleton-shimmer rounded-md h-6" />)}</div>
       </div>
     );
   }
@@ -151,18 +145,18 @@ export function StocksPanel() {
   }
 
   return (
-    <div className="h-full flex flex-col p-3 gap-2">
+    <div className="h-full flex flex-col p-2.5 gap-1.5 overflow-hidden">
       <SectionHeader color="bg-cyan-500" title="Saham Indonesia" source="BEI" interval="60s" />
 
-      {/* Index cards — 3 columns */}
-      <div className="grid grid-cols-3 gap-1.5 shrink-0">
-        {indices.map(item => <IndexCard key={item.symbol} item={item} />)}
+      {/* Index rows — stacked vertically, compact */}
+      <div className="flex flex-col gap-1 shrink-0">
+        {indices.map(item => <IndexRow key={item.symbol} item={item} />)}
       </div>
 
       {/* Blue-chip stocks */}
-      <div className="flex-1 flex flex-col gap-1 min-h-0">
-        <div className="text-[10px] text-zinc-600 uppercase tracking-wider font-semibold shrink-0">Blue-Chip</div>
-        <div className="flex-1 flex flex-col gap-1 min-h-0">
+      <div className="flex-1 flex flex-col gap-1 min-h-0 overflow-hidden">
+        <div className="text-[9px] text-zinc-600 uppercase tracking-wider font-semibold shrink-0">Blue-Chip</div>
+        <div className="flex-1 flex flex-col gap-1 min-h-0 overflow-hidden">
           {bluechips.map(item => <BluechipRow key={item.symbol} item={item} />)}
         </div>
       </div>
