@@ -9,6 +9,7 @@ import { GlobalIndices } from '@/components/dashboard/GlobalIndices';
 import { CommoditiesGrid } from '@/components/dashboard/CommoditiesGrid';
 import { SentimentBar } from '@/components/dashboard/SentimentBar';
 import { NewsTicker } from '@/components/dashboard/NewsTicker';
+import { BgmPlayer } from '@/components/dashboard/BgmPlayer';
 import { Activity } from 'lucide-react';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -186,12 +187,18 @@ export default function TradingDashboard() {
 
       {/* ── Bottom Bar ────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-5 py-1 shrink-0 bg-[#0c0c0e] border-t border-zinc-800/30 text-xs text-zinc-700">
-        <span>Indodax &bull; Yahoo Finance &bull; ExchangeRate-API &bull; fawazahmed0 &bull; alternative.me</span>
-        <span className="flex items-center gap-2">
-          <span>Crypto 10s &bull; Saham/Valas/Global 60s &bull; Emas 5m &bull; News 2m</span>
+        <div className="flex items-center gap-3">
+          <span>Indodax &bull; Yahoo Finance &bull; ExchangeRate-API &bull; fawazahmed0 &bull; alternative.me</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <BgmPlayer />
           <span className="text-zinc-800">|</span>
-          <span className="text-zinc-600">Press <kbd className="px-1.5 py-0.5 bg-zinc-800/50 rounded text-[10px] text-zinc-500 font-mono">F</kbd> fullscreen</span>
-        </span>
+          <span className="flex items-center gap-2">
+            <span className="text-zinc-700">Crypto 10s &bull; Saham/Valas/Global 60s &bull; Emas 5m &bull; News 2m</span>
+            <span className="text-zinc-800">|</span>
+            <span className="text-zinc-600">Press <kbd className="px-1.5 py-0.5 bg-zinc-800/50 rounded text-[10px] text-zinc-500 font-mono">F</kbd> fullscreen</span>
+          </span>
+        </div>
       </div>
     </div>
   );
