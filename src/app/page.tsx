@@ -45,14 +45,14 @@ function LiveClock() {
 
   return (
     <div className="flex items-center gap-3">
-      <span className="relative flex h-3 w-3">
+      <span className="relative flex h-2.5 w-2.5">
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
-        <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500 live-dot-pulse" />
+        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500 live-dot-pulse" />
       </span>
-      <span className="text-xs font-bold text-green-400 tracking-[0.2em] uppercase">Live</span>
-      <span className="font-mono text-2xl font-bold text-white tabular-nums tracking-[0.12em]">{time}</span>
-      <span className="text-sm font-medium text-zinc-500 tracking-wide">{dateStr}</span>
-      <span className="text-xs text-zinc-600 bg-zinc-800/50 px-2 py-0.5 rounded font-mono">WIB</span>
+      <span className="text-[10px] font-bold text-green-400 tracking-[0.2em] uppercase">Live</span>
+      <span className="font-mono text-xl font-bold text-white tabular-nums tracking-[0.12em]">{time}</span>
+      <span className="text-xs font-medium text-zinc-500 tracking-wide">{dateStr}</span>
+      <span className="text-[10px] text-zinc-600 bg-zinc-800/50 px-1.5 py-0.5 rounded font-mono">WIB</span>
     </div>
   );
 }
@@ -88,18 +88,18 @@ function TickerTape() {
 
   const content = items.map(item => (
     <span key={item.name} className="inline-flex items-center gap-2 px-6 whitespace-nowrap">
-      <span className="font-bold text-zinc-400 text-sm">{item.name}/IDR</span>
-      <span className="font-mono text-white text-sm tabular-nums font-semibold">
+      <span className="font-bold text-zinc-500 text-xs">{item.name}/IDR</span>
+      <span className="font-mono text-white text-xs tabular-nums font-semibold">
         {new Intl.NumberFormat('id-ID').format(item.price)}
       </span>
-      <span className={`text-xs font-bold tabular-nums ${item.isUp ? 'text-green-400' : 'text-red-400'}`}>
+      <span className={`text-[10px] font-bold tabular-nums ${item.isUp ? 'text-green-400' : 'text-red-400'}`}>
         {item.isUp ? '\u25B2' : '\u25BC'} {item.isUp ? '+' : ''}{item.change_pct.toFixed(2)}%
       </span>
     </span>
   ));
 
   return (
-    <div className="overflow-hidden h-9 flex items-center bg-[#08080a] border-b border-zinc-800/30 shrink-0">
+    <div className="overflow-hidden h-8 flex items-center bg-[#08080a] border-b border-zinc-800/30 shrink-0">
       <div className="flex animate-ticker">
         {content}
         {content}
@@ -129,15 +129,14 @@ export default function TradingDashboard() {
       <TickerTape />
 
       {/* ── Top Bar: Logo + Sentiment + Clock ─────────────────────────────── */}
-      <div className="flex items-center justify-between px-5 py-2 shrink-0" style={{ background: 'rgba(12, 12, 14, 0.95)' }}>
-        {/* Left: Logo */}
+      <div className="flex items-center justify-between px-4 py-1.5 shrink-0" style={{ background: 'rgba(12, 12, 14, 0.95)' }}>
+        {/* Left: Logo + Sentiment */}
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-md bg-gradient-to-br from-amber-500/20 to-cyan-500/10 border border-amber-500/20 flex items-center justify-center">
-            <Activity className="w-4 h-4 text-amber-400" />
+          <div className="w-7 h-7 rounded-md bg-gradient-to-br from-amber-500/20 to-cyan-500/10 border border-amber-500/20 flex items-center justify-center">
+            <Activity className="w-3.5 h-3.5 text-amber-400" />
           </div>
-          <h1 className="text-sm font-bold text-zinc-200 tracking-[0.12em] uppercase">Market Dashboard</h1>
-          <div className="w-px h-5 bg-zinc-800" />
-          {/* Sentiment bar inline */}
+          <h1 className="text-xs font-bold text-zinc-300 tracking-[0.15em] uppercase">Market Dashboard</h1>
+          <div className="w-px h-4 bg-zinc-800" />
           <SentimentBar />
         </div>
         {/* Right: Clock */}
@@ -145,16 +144,16 @@ export default function TradingDashboard() {
       </div>
 
       {/* ── Main Content (3 rows) ─────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-h-0 px-3 pt-2 pb-1.5 gap-2">
+      <div className="flex-1 flex flex-col min-h-0 px-2 pt-1.5 pb-1 gap-1.5">
 
-        {/* ═══ ROW 1: Crypto (24%) ═══ */}
+        {/* ROW 1: Crypto (24%) */}
         <div className="flex-[24] min-h-0 rounded-lg gradient-border-amber"
           style={{ background: 'rgba(10, 10, 12, 0.8)' }}>
           <CryptoCards />
         </div>
 
-        {/* ═══ ROW 2: Stocks + Forex + Gold (46%) ═══ */}
-        <div className="flex-[46] min-h-0 flex gap-2">
+        {/* ROW 2: Stocks + Forex + Gold (46%) */}
+        <div className="flex-[46] min-h-0 flex gap-1.5">
           <div className="flex-[40] min-h-0 rounded-lg"
             style={{ background: 'rgba(10, 10, 12, 0.8)', border: '1px solid rgba(6, 182, 212, 0.12)' }}>
             <StocksPanel />
@@ -169,8 +168,8 @@ export default function TradingDashboard() {
           </div>
         </div>
 
-        {/* ═══ ROW 3: Global Indices + Commodities (30%) ═══ */}
-        <div className="flex-[30] min-h-0 flex gap-2">
+        {/* ROW 3: Global Indices + Commodities (30%) */}
+        <div className="flex-[30] min-h-0 flex gap-1.5">
           <div className="flex-1 min-h-0 rounded-lg"
             style={{ background: 'rgba(10, 10, 12, 0.8)', border: '1px solid rgba(59, 130, 246, 0.12)' }}>
             <GlobalIndices />
@@ -186,18 +185,12 @@ export default function TradingDashboard() {
       <NewsTicker />
 
       {/* ── Bottom Bar ────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-5 py-1 shrink-0 bg-[#0c0c0e] border-t border-zinc-800/30 text-xs text-zinc-700">
-        <div className="flex items-center gap-3">
-          <span>Indodax &bull; Yahoo Finance &bull; ExchangeRate-API &bull; fawazahmed0 &bull; alternative.me</span>
-        </div>
+      <div className="flex items-center justify-between px-4 py-1 shrink-0 bg-[#0c0c0e] border-t border-zinc-800/30 text-[10px] text-zinc-700">
+        <span>Indodax &bull; Yahoo Finance &bull; ExchangeRate-API &bull; fawazahmed0 &bull; alternative.me</span>
         <div className="flex items-center gap-3">
           <BgmPlayer />
           <span className="text-zinc-800">|</span>
-          <span className="flex items-center gap-2">
-            <span className="text-zinc-700">Crypto 10s &bull; Saham/Valas/Global 60s &bull; Emas 5m &bull; News 2m</span>
-            <span className="text-zinc-800">|</span>
-            <span className="text-zinc-600">Press <kbd className="px-1.5 py-0.5 bg-zinc-800/50 rounded text-[10px] text-zinc-500 font-mono">F</kbd> fullscreen</span>
-          </span>
+          <span className="text-zinc-600">Press <kbd className="px-1 py-0.5 bg-zinc-800/50 rounded text-[9px] text-zinc-500 font-mono">F</kbd> fullscreen</span>
         </div>
       </div>
     </div>

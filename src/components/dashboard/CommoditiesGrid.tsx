@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { SectionHeader } from './SectionHeader';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -42,7 +43,7 @@ const COMMODITY_COLORS: Record<string, string> = {
   'Tembaga': 'text-orange-400',
 };
 
-function formatPrice(n: number): string {
+function fmtPrice(n: number): string {
   if (n === 0) return '-';
   if (n >= 100) return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
   return new Intl.NumberFormat('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(n);
@@ -83,7 +84,7 @@ export function CommoditiesGrid() {
     return (
       <div className="h-full flex flex-col p-3 gap-2">
         <div className="skeleton-shimmer h-3 w-28 rounded" />
-        <div className="flex-1 grid grid-cols-3 grid-rows-2 gap-2">{[1,2,3,4,5,6].map(i => <div key={i} className="skeleton-shimmer rounded-md" />)}</div>
+        <div className="flex-1 grid grid-cols-3 grid-rows-2 gap-1.5">{[1,2,3,4,5,6].map(i => <div key={i} className="skeleton-shimmer rounded-lg" />)}</div>
       </div>
     );
   }
@@ -98,20 +99,10 @@ export function CommoditiesGrid() {
 
   return (
     <div className="h-full flex flex-col p-3 gap-2">
-      {/* Header */}
-      <div className="flex items-center justify-between px-0.5 shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-1 h-5 rounded-full bg-orange-500" />
-          <span className="text-sm font-bold text-orange-400/90 tracking-widest uppercase">Komoditas</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-orange-500 live-dot-pulse" />
-          <span className="text-xs text-zinc-600 font-mono">60s</span>
-        </div>
-      </div>
+      <SectionHeader color="bg-orange-500" title="Komoditas" interval="60s" />
 
       {/* 3x2 grid */}
-      <div className="flex-1 grid grid-cols-3 grid-rows-2 gap-2 min-h-0">
+      <div className="flex-1 grid grid-cols-3 grid-rows-2 gap-1.5 min-h-0">
         {data.map(item => {
           const isUp = item.change_pct > 0;
           const isDown = item.change_pct < 0;
@@ -119,19 +110,19 @@ export function CommoditiesGrid() {
           const color = COMMODITY_COLORS[item.name] || 'text-zinc-400';
 
           return (
-            <div key={item.symbol} className="rounded-md border border-zinc-800/25 bg-zinc-900/25 px-3 py-2 flex flex-col justify-between hover:bg-zinc-800/25 transition-all duration-200">
-              <div className="flex items-center gap-2">
-                <span className="text-sm shrink-0">{icon}</span>
+            <div key={item.symbol} className="rounded-lg border border-zinc-800/25 bg-zinc-900/25 px-2.5 py-2 flex flex-col justify-between hover:bg-zinc-800/25 transition-all">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs shrink-0">{icon}</span>
                 <div className="min-w-0">
-                  <span className="text-sm font-bold text-zinc-300 tracking-wide block leading-tight truncate">{item.name}</span>
-                  <span className="text-xs text-zinc-600">{item.unit}</span>
+                  <span className="text-[11px] font-bold text-zinc-300 tracking-wide block leading-tight">{item.name}</span>
+                  <span className="text-[10px] text-zinc-600">{item.unit}</span>
                 </div>
               </div>
               <div className="flex items-end justify-between mt-auto gap-1">
-                <span className={`font-mono text-base font-semibold ${color} tabular-nums leading-tight min-w-0`}>
-                  {formatPrice(item.price)}
+                <span className={`font-mono text-xs font-semibold ${color} tabular-nums leading-tight min-w-0`}>
+                  {fmtPrice(item.price)}
                 </span>
-                <span className={`text-sm font-bold tabular-nums shrink-0 ${
+                <span className={`text-[10px] font-bold tabular-nums shrink-0 ${
                   isUp ? 'text-green-400' : isDown ? 'text-red-400' : 'text-zinc-500'
                 }`}>
                   {isUp ? '\u25B2' : isDown ? '\u25BC' : '\u25CF'} {isUp ? '+' : ''}{item.change_pct.toFixed(2)}%

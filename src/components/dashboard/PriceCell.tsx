@@ -35,7 +35,7 @@ export const PriceCell = memo(function PriceCell({ value, format = 'currency', d
   return (
     <span
       className={`
-        inline-block rounded-md px-1.5 py-0.5 font-mono tabular-nums
+        inline-block font-mono tabular-nums
         transition-colors duration-300
         ${animClass}
         ${className}

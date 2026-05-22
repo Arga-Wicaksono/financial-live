@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { SectionHeader } from './SectionHeader';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -23,18 +24,26 @@ interface IndicesResponse {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-function formatPrice(n: number): string {
+function fmtPrice(n: number): string {
   if (n === 0) return '-';
   if (n >= 10000) return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n);
   return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 }
 
-const REGION_FLAGS: Record<string, { flag: string; region: string }> = {
-  'S&P 500': { flag: '\u{1F1FA}\u{1F1F8}', region: 'US' },
-  'Dow Jones': { flag: '\u{1F1FA}\u{1F1F8}', region: 'US' },
-  'Nasdaq': { flag: '\u{1F1FA}\u{1F1F8}', region: 'US' },
-  'Nikkei 225': { flag: '\u{1F1EF}\u{1F1F5}', region: 'JP' },
-  'Hang Seng': { flag: '\u{1F1ED}\u{1F1F0}', region: 'HK' },
+const FLAGS: Record<string, string> = {
+  'S&P 500': '\u{1F1FA}\u{1F1F8}',
+  'Dow Jones': '\u{1F1FA}\u{1F1F8}',
+  'Nasdaq': '\u{1F1FA}\u{1F1F8}',
+  'Nikkei 225': '\u{1F1EF}\u{1F1F5}',
+  'Hang Seng': '\u{1F1ED}\u{1F1F0}',
+};
+
+const REGIONS: Record<string, string> = {
+  'S&P 500': 'US',
+  'Dow Jones': 'US',
+  'Nasdaq': 'US',
+  'Nikkei 225': 'JP',
+  'Hang Seng': 'HK',
 };
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -72,7 +81,7 @@ export function GlobalIndices() {
     return (
       <div className="h-full flex flex-col p-3 gap-2">
         <div className="skeleton-shimmer h-3 w-28 rounded" />
-        <div className="flex-1 flex flex-col gap-2">{[1,2,3,4,5].map(i => <div key={i} className="skeleton-shimmer rounded-md flex-1" />)}</div>
+        <div className="flex-1 flex flex-col gap-1.5">{[1,2,3,4,5].map(i => <div key={i} className="skeleton-shimmer rounded-lg flex-1" />)}</div>
       </div>
     );
   }
@@ -87,43 +96,33 @@ export function GlobalIndices() {
 
   return (
     <div className="h-full flex flex-col p-3 gap-2">
-      {/* Header */}
-      <div className="flex items-center justify-between px-0.5 shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-1 h-5 rounded-full bg-blue-500" />
-          <span className="text-sm font-bold text-blue-400/90 tracking-widest uppercase">Indeks Global</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 live-dot-pulse" />
-          <span className="text-xs text-zinc-600 font-mono">60s</span>
-        </div>
-      </div>
+      <SectionHeader color="bg-blue-500" title="Indeks Global" interval="60s" />
 
-      {/* Index rows */}
-      <div className="flex-1 flex flex-col gap-2 min-h-0">
+      <div className="flex-1 flex flex-col gap-1.5 min-h-0">
         {data.map(item => {
           const isUp = item.change_pct > 0;
           const isDown = item.change_pct < 0;
-          const info = REGION_FLAGS[item.name] || { flag: '\u{1F310}', region: '' };
+          const flag = FLAGS[item.name] || '\u{1F310}';
+          const region = REGIONS[item.name] || '';
 
           return (
-            <div key={item.symbol} className="rounded-md px-4 py-2 flex items-center justify-between border border-zinc-800/20 bg-zinc-900/20 hover:bg-zinc-800/25 transition-all duration-200 flex-1 min-h-0">
-              <div className="flex items-center gap-3 min-w-0">
-                <span className="text-base shrink-0">{info.flag}</span>
+            <div key={item.symbol} className="rounded-lg px-3 py-1.5 flex items-center justify-between border border-zinc-800/20 bg-zinc-900/20 hover:bg-zinc-800/25 transition-all flex-1 min-h-0">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <span className="text-sm shrink-0">{flag}</span>
                 <div className="min-w-0">
-                  <span className="text-sm font-bold text-zinc-300 tracking-wide block leading-tight">{item.name}</span>
-                  <div className="flex items-center gap-2 text-xs text-zinc-600 whitespace-nowrap">
-                    {info.region && <span>{info.region}</span>}
-                    <span>H:{formatPrice(item.high)}</span>
-                    <span>L:{formatPrice(item.low)}</span>
+                  <span className="text-xs font-bold text-zinc-300 tracking-wide block leading-tight">{item.name}</span>
+                  <div className="flex items-center gap-2 text-[10px] text-zinc-600 mt-0.5">
+                    {region && <span className="bg-zinc-800/50 px-1 rounded">{region}</span>}
+                    <span>H:{fmtPrice(item.high)}</span>
+                    <span>L:{fmtPrice(item.low)}</span>
                   </div>
                 </div>
               </div>
-              <div className="text-right shrink-0 pl-3">
-                <span className="font-mono text-base font-semibold text-white tabular-nums block leading-tight">
-                  {formatPrice(item.price)}
+              <div className="text-right shrink-0 ml-2">
+                <span className="font-mono text-sm font-semibold text-white tabular-nums block leading-tight">
+                  {fmtPrice(item.price)}
                 </span>
-                <span className={`text-sm font-bold tabular-nums block leading-tight ${
+                <span className={`text-[10px] font-bold tabular-nums block leading-tight ${
                   isUp ? 'text-green-400' : isDown ? 'text-red-400' : 'text-zinc-500'
                 }`}>
                   {isUp ? '\u25B2' : isDown ? '\u25BC' : '\u25CF'} {isUp ? '+' : ''}{item.change_pct.toFixed(2)}%
