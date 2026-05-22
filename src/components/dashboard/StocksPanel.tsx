@@ -47,23 +47,23 @@ function IndexCard({ item }: { item: StockItem }) {
   const isDown = item.change_pct < 0;
 
   return (
-    <div className="rounded-lg px-2.5 py-1.5 flex items-center justify-between border border-zinc-800/30 bg-zinc-900/30 hover:bg-zinc-800/30 transition-all duration-200">
+    <div className="rounded-md px-2 py-1.5 flex items-center justify-between border border-zinc-800/25 bg-zinc-900/30 hover:bg-zinc-800/30 transition-all duration-200">
       <div className="flex items-center gap-1.5">
-        <div className="w-1 h-3.5 rounded-full bg-cyan-500" />
+        <div className="w-0.5 h-4 rounded-full bg-cyan-500" />
         <div>
           <span className="text-[10px] font-bold text-zinc-300 tracking-wider block leading-tight">{item.name}</span>
-          <div className="flex items-center gap-2 text-[7px] text-zinc-600 mt-0.5">
-            <span>H: {formatLargeNum(item.high)}</span>
-            <span>L: {formatLargeNum(item.low)}</span>
-            <span>V: {formatVol(item.volume)}</span>
+          <div className="flex items-center gap-1.5 text-[7px] text-zinc-600">
+            <span>H:{formatLargeNum(item.high)}</span>
+            <span>L:{formatLargeNum(item.low)}</span>
+            <span>V:{formatVol(item.volume)}</span>
           </div>
         </div>
       </div>
       <div className="text-right">
-        <span className="font-mono text-sm font-bold text-white tabular-nums block leading-tight">
+        <span className="font-mono text-[13px] font-bold text-white tabular-nums block leading-tight">
           {formatLargeNum(item.price)}
         </span>
-        <span className={`text-[9px] font-bold tabular-nums block leading-tight mt-0.5 ${
+        <span className={`text-[9px] font-bold tabular-nums block leading-tight ${
           isUp ? 'text-green-400' : isDown ? 'text-red-400' : 'text-zinc-500'
         }`}>
           {isUp ? '\u25B2' : isDown ? '\u25BC' : '\u25CF'} {isUp ? '+' : ''}{item.change_pct.toFixed(2)}%
@@ -80,11 +80,9 @@ function BluechipRow({ item }: { item: StockItem }) {
   const isDown = item.change_pct < 0;
 
   return (
-    <div className="rounded-md px-2 py-1.5 flex items-center justify-between border border-zinc-800/15 bg-zinc-900/15 hover:bg-zinc-800/25 transition-all duration-200">
-      <div className="flex items-center gap-2">
-        <span className="text-[10px] font-bold text-cyan-400/90 tabular-nums tracking-wide">{item.name}</span>
-      </div>
-      <div className="flex items-center gap-3">
+    <div className="rounded-md px-2 py-1 flex items-center justify-between border border-zinc-800/15 bg-zinc-900/15 hover:bg-zinc-800/25 transition-all duration-200">
+      <span className="text-[10px] font-bold text-cyan-400/90 tabular-nums tracking-wide">{item.name}</span>
+      <div className="flex items-center gap-2.5">
         <span className="font-mono text-[11px] font-semibold text-white tabular-nums">
           {formatLargeNum(item.price)}
         </span>
@@ -113,11 +111,7 @@ export function StocksPanel() {
       const res = await fetch('/api/market/stocks');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json: StockResponse = await res.json();
-
-      if (!json.indices || json.indices.length === 0) {
-        throw new Error('Empty data from API');
-      }
-
+      if (!json.indices || json.indices.length === 0) throw new Error('Empty data');
       setIndices(json.indices);
       setBluechips(json.bluechips);
       setLoading(false);
@@ -137,16 +131,10 @@ export function StocksPanel() {
 
   if (loading && !error) {
     return (
-      <div className="h-full flex flex-col p-2 gap-1.5">
-        <div className="flex items-center gap-2 px-1">
-          <div className="skeleton-shimmer h-3 w-24 rounded" />
-        </div>
-        <div className="grid grid-cols-3 gap-1">
-          {[1, 2, 3].map(i => <div key={i} className="skeleton-shimmer rounded-lg h-12" />)}
-        </div>
-        <div className="flex-1 flex flex-col gap-0.5">
-          {[1, 2, 3, 4, 5].map(i => <div key={i} className="skeleton-shimmer rounded-md h-7" />)}
-        </div>
+      <div className="h-full flex flex-col p-2 gap-1">
+        <div className="skeleton-shimmer h-2.5 w-24 rounded" />
+        <div className="grid grid-cols-3 gap-1"><div className="skeleton-shimmer rounded-md h-12" /><div className="skeleton-shimmer rounded-md h-12" /><div className="skeleton-shimmer rounded-md h-12" /></div>
+        <div className="flex-1 flex flex-col gap-0.5">{[1,2,3,4,5].map(i => <div key={i} className="skeleton-shimmer rounded-md h-6" />)}</div>
       </div>
     );
   }
@@ -163,28 +151,28 @@ export function StocksPanel() {
   }
 
   return (
-    <div className="h-full flex flex-col p-2 gap-1.5">
-      {/* Section header */}
+    <div className="h-full flex flex-col p-2 gap-1">
+      {/* Header */}
       <div className="flex items-center justify-between px-0.5">
         <div className="flex items-center gap-1.5">
-          <div className="w-1 h-4 rounded-full bg-cyan-500" />
+          <div className="w-0.5 h-3.5 rounded-full bg-cyan-500" />
           <span className="text-[10px] font-bold text-cyan-400/90 tracking-widest uppercase">Saham Indonesia</span>
-          <span className="text-[9px] text-zinc-700 font-mono">BEI</span>
+          <span className="text-[8px] text-zinc-700 font-mono">BEI</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 live-dot-pulse" />
-          <span className="text-[9px] text-zinc-600 font-mono">60s</span>
+          <span className="w-1 h-1 rounded-full bg-cyan-500 live-dot-pulse" />
+          <span className="text-[8px] text-zinc-600 font-mono">60s</span>
         </div>
       </div>
 
-      {/* Index cards: IHSG, LQ45, IDX30 */}
+      {/* Index cards */}
       <div className="grid grid-cols-3 gap-1">
         {indices.map(item => <IndexCard key={item.symbol} item={item} />)}
       </div>
 
       {/* Blue-chip stocks */}
       <div className="flex-1 flex flex-col gap-0.5 min-h-0 overflow-hidden">
-        <div className="text-[8px] text-zinc-600 uppercase tracking-wider font-semibold px-0.5 mt-0.5">Blue-Chip</div>
+        <div className="text-[7px] text-zinc-600 uppercase tracking-wider font-semibold px-0.5">Blue-Chip</div>
         <div className="flex-1 flex flex-col gap-0.5 min-h-0">
           {bluechips.map(item => <BluechipRow key={item.symbol} item={item} />)}
         </div>

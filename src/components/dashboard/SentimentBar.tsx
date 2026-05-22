@@ -28,14 +28,6 @@ function getFngColor(value: number): string {
   return 'text-emerald-400';
 }
 
-function getFngBg(value: number): string {
-  if (value <= 25) return 'from-red-500/20 to-red-600/5 border-red-500/20';
-  if (value <= 45) return 'from-orange-500/20 to-orange-600/5 border-orange-500/20';
-  if (value <= 55) return 'from-yellow-500/20 to-yellow-600/5 border-yellow-500/20';
-  if (value <= 75) return 'from-green-500/20 to-green-600/5 border-green-500/20';
-  return 'from-emerald-500/20 to-emerald-600/5 border-emerald-500/20';
-}
-
 function getFngGauge(value: number): string {
   if (value <= 25) return 'bg-red-500';
   if (value <= 45) return 'bg-orange-500';
@@ -44,70 +36,61 @@ function getFngGauge(value: number): string {
   return 'bg-emerald-500';
 }
 
-// ── Component ──────────────────────────────────────────────────────────────────
+// ── Component (inline, no wrapper padding) ─────────────────────────────────────
 
 export function SentimentBar() {
   const [data, setData] = useState<SentimentResponse | null>(null);
-  const [loading, setLoading] = useState(true);
   const hasLoadedRef = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
       const res = await fetch('/api/market/sentiment');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) return;
       const json: SentimentResponse = await res.json();
       setData(json);
-      setLoading(false);
       hasLoadedRef.current = true;
-    } catch (err) {
-      console.error('SentimentBar fetch error:', err);
-    }
+    } catch { /* ignore */ }
   }, []);
 
   useEffect(() => {
     fetchData();
-    intervalRef.current = setInterval(fetchData, 300_000); // 5 min
+    intervalRef.current = setInterval(fetchData, 300_000);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [fetchData]);
 
-  if (loading || !data) return null;
+  if (!data) return <span className="text-[9px] text-zinc-700">Fear & Greed --</span>;
 
   const fng = data.fear_greed;
   const bi = data.bi_rate;
 
   return (
-    <div className="flex items-center gap-4 h-full px-2">
-      {/* Fear & Greed Gauge */}
+    <div className="flex items-center gap-3">
+      {/* Fear & Greed */}
       {fng.value > 0 && (
-        <div className="flex items-center gap-2">
-          <span className="text-[9px] text-zinc-600 uppercase tracking-wider font-semibold whitespace-nowrap">Fear & Greed</span>
-          <div className={`rounded-lg px-2 py-1 flex items-center gap-2 border bg-gradient-to-r ${getFngBg(fng.value)}`}>
-            {/* Gauge bar */}
-            <div className="w-16 h-1.5 rounded-full bg-zinc-800/80 overflow-hidden">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[8px] text-zinc-600 uppercase tracking-wider font-semibold">Fear & Greed</span>
+          <div className="flex items-center gap-1.5 rounded-md px-1.5 py-0.5 bg-zinc-800/40 border border-zinc-800/30">
+            <div className="w-14 h-1 rounded-full bg-zinc-800/80 overflow-hidden">
               <div
                 className={`h-full rounded-full ${getFngGauge(fng.value)} transition-all duration-500`}
                 style={{ width: `${fng.value}%` }}
               />
             </div>
-            <span className={`font-mono text-xs font-bold tabular-nums ${getFngColor(fng.value)}`}>
+            <span className={`font-mono text-[10px] font-bold tabular-nums ${getFngColor(fng.value)}`}>
               {fng.value}
             </span>
-            <span className="text-[8px] text-zinc-500 capitalize max-w-[50px] truncate">{fng.classification}</span>
+            <span className="text-[7px] text-zinc-500 capitalize max-w-[42px] truncate">{fng.classification}</span>
           </div>
         </div>
       )}
 
-      {/* Separator */}
-      <div className="w-px h-4 bg-zinc-800/50" />
-
       {/* BI Rate */}
       <div className="flex items-center gap-1.5">
-        <span className="text-[9px] text-zinc-600 uppercase tracking-wider font-semibold">BI Rate</span>
-        <div className="rounded-lg px-2 py-1 border border-purple-500/20 bg-gradient-to-r from-purple-500/15 to-purple-600/5">
-          <span className="font-mono text-xs font-bold text-purple-400 tabular-nums">{bi.rate}%</span>
-          <span className="text-[7px] text-zinc-600 ml-1.5">{bi.last_updated}</span>
-        </div>
+        <span className="text-[8px] text-zinc-600 uppercase tracking-wider font-semibold">BI Rate</span>
+        <span className="font-mono text-[10px] font-bold text-purple-400 tabular-nums bg-purple-500/10 border border-purple-500/15 rounded-md px-1.5 py-0.5">
+          {bi.rate}%
+        </span>
       </div>
     </div>
   );

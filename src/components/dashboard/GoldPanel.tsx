@@ -33,20 +33,14 @@ export function GoldPanel() {
       const res = await fetch('/api/market/gold');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json: GoldResponse = await res.json();
-
-      if (!json || json.xau_usd === 0) {
-        throw new Error('Invalid gold data');
-      }
-
+      if (!json || json.xau_usd === 0) throw new Error('Invalid gold data');
       setData(json);
       setLoading(false);
       setError(null);
       hasLoadedRef.current = true;
     } catch (err) {
       console.error('GoldPanel fetch error:', err);
-      if (!hasLoadedRef.current) {
-        setError('Gagal memuat data emas');
-      }
+      if (!hasLoadedRef.current) setError('Gagal memuat data emas');
     }
   }, []);
 
@@ -58,11 +52,11 @@ export function GoldPanel() {
 
   if (loading && !error) {
     return (
-      <div className="h-full flex flex-col p-2 gap-1.5">
-        <div className="skeleton-shimmer h-3 w-20 rounded" />
-        <div className="skeleton-shimmer h-14 rounded-xl" />
-        <div className="skeleton-shimmer h-14 rounded-xl" />
-        <div className="flex-1 skeleton-shimmer rounded-xl" />
+      <div className="h-full flex flex-col p-2 gap-1">
+        <div className="skeleton-shimmer h-2.5 w-20 rounded" />
+        <div className="skeleton-shimmer h-12 rounded-md" />
+        <div className="skeleton-shimmer h-12 rounded-md" />
+        <div className="flex-1 skeleton-shimmer rounded-md" />
       </div>
     );
   }
@@ -70,10 +64,7 @@ export function GoldPanel() {
   if (error) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <span className="text-xs text-red-400 block">{error}</span>
-          <button onClick={fetchData} className="mt-1 text-[10px] text-zinc-500 hover:text-white underline">Coba lagi</button>
-        </div>
+        <span className="text-xs text-red-400">{error}</span>
       </div>
     );
   }
@@ -84,85 +75,85 @@ export function GoldPanel() {
   const spreadPct = data.antam_est_jual > 0 ? (spread / data.antam_est_jual * 100) : 0;
 
   return (
-    <div className="h-full flex flex-col p-2 gap-1.5">
-      {/* Section header */}
+    <div className="h-full flex flex-col p-2 gap-1">
+      {/* Header */}
       <div className="flex items-center justify-between px-0.5">
         <div className="flex items-center gap-1.5">
-          <div className="w-1 h-4 rounded-full bg-yellow-500" />
+          <div className="w-0.5 h-3.5 rounded-full bg-yellow-500" />
           <span className="text-[10px] font-bold text-yellow-400/90 tracking-widest uppercase">Emas (XAU)</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          {data.data_date && <span className="text-[8px] text-zinc-700 font-mono">{data.data_date}</span>}
-          <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 status-breathe" />
+        <div className="flex items-center gap-1">
+          {data.data_date && <span className="text-[7px] text-zinc-700 font-mono">{data.data_date}</span>}
+          <span className="w-1 h-1 rounded-full bg-yellow-500 status-breathe" />
         </div>
       </div>
 
-      {/* XAU/USD — Hero card */}
-      <div className="rounded-lg px-3 py-2 relative overflow-hidden"
+      {/* XAU/USD Hero */}
+      <div className="rounded-md px-2.5 py-1.5 relative overflow-hidden"
         style={{
           background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, rgba(234, 179, 8, 0.02) 100%)',
-          border: '1px solid rgba(234, 179, 8, 0.15)',
+          border: '1px solid rgba(234, 179, 8, 0.12)',
           animation: 'pulse-glow-gold 4s ease-in-out infinite',
         }}
       >
         <div className="flex items-center justify-between">
-          <div>
-            <div className="text-[9px] text-zinc-500 uppercase tracking-wider font-medium">XAU / USD</div>
-            <div className="text-[8px] text-zinc-600">per Troy Oz</div>
-          </div>
+          <div className="text-[8px] text-zinc-500 uppercase tracking-wider font-medium">XAU / USD <span className="text-zinc-700 normal-case">per Troy Oz</span></div>
           <div className="flex items-baseline gap-0.5">
-            <span className="text-xs text-yellow-500/70">$</span>
-            <PriceCell value={data.xau_usd} format="currency" decimals={2} className="text-base font-bold tabular-nums text-yellow-200" />
+            <span className="text-[10px] text-yellow-500/70">$</span>
+            <PriceCell value={data.xau_usd} format="currency" decimals={2} className="text-[15px] font-bold tabular-nums text-yellow-200" />
           </div>
         </div>
       </div>
 
       {/* XAU/IDR */}
-      <div className="rounded-lg px-3 py-2 bg-zinc-900/40 border border-zinc-800/30">
-        <div className="text-[9px] text-zinc-500 uppercase tracking-wider font-medium">XAU / IDR</div>
-        <PriceCell value={data.xau_idr} format="currency" decimals={0} className="text-sm font-bold tabular-nums" />
-        <div className="flex items-center justify-between mt-0.5 text-[8px] text-zinc-600">
-          <span>Rp {Math.round(data.xau_idr_per_gram).toLocaleString('id-ID')}/gram</span>
-          {data.usd_idr > 0 && <span>Kurs Rp {data.usd_idr.toLocaleString('id-ID')}</span>}
+      <div className="rounded-md px-2.5 py-1.5 bg-zinc-900/40 border border-zinc-800/25">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-[8px] text-zinc-500 uppercase tracking-wider font-medium">XAU / IDR</div>
+            <PriceCell value={data.xau_idr} format="currency" decimals={0} className="text-[13px] font-bold tabular-nums" />
+          </div>
+          <div className="text-right">
+            <div className="text-[8px] text-zinc-600">per gram</div>
+            <div className="text-[11px] text-zinc-400 tabular-nums font-medium">
+              Rp {Math.round(data.xau_idr_per_gram).toLocaleString('id-ID')}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Antam Estimates */}
-      <div className="flex-1 rounded-lg relative overflow-hidden flex flex-col gradient-border-gold min-h-0"
-        style={{ background: 'linear-gradient(180deg, rgba(234, 179, 8, 0.06) 0%, rgba(24, 24, 27, 0.4) 40%)' }}
+      <div className="flex-1 rounded-md relative overflow-hidden flex flex-col gradient-border-gold min-h-0"
+        style={{ background: 'linear-gradient(180deg, rgba(234, 179, 8, 0.05) 0%, rgba(24, 24, 27, 0.4) 40%)' }}
       >
-        <div className="px-3 pt-2 pb-1.5 flex-1 flex flex-col min-h-0">
-          <div className="flex items-center justify-between mb-1.5">
+        <div className="px-2.5 pt-1.5 pb-1 flex-1 flex flex-col min-h-0">
+          <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-1">
               <span className="text-xs">{'\u{1FA99}'}</span>
               <span className="text-[9px] font-bold text-yellow-400/90 tracking-widest uppercase">Estimasi Antam</span>
             </div>
-            <span className="text-[8px] text-zinc-600">/ gram</span>
+            <span className="text-[7px] text-zinc-600">/ gram</span>
           </div>
 
           {/* Jual */}
-          <div className="mb-1">
-            <div className="text-[8px] text-zinc-500 mb-0.5 font-medium">Harga Jual (retail)</div>
-            <PriceCell value={data.antam_est_jual} format="currency" decimals={0} className="text-sm font-bold text-yellow-300 tabular-nums" />
+          <div className="flex items-center justify-between mb-0.5">
+            <span className="text-[7px] text-zinc-500">Jual (retail)</span>
+            <PriceCell value={data.antam_est_jual} format="currency" decimals={0} className="text-[13px] font-bold text-yellow-300 tabular-nums" />
           </div>
 
-          {/* Spread */}
-          <div className="flex items-center justify-between text-[7px] text-zinc-600 my-1">
+          {/* Spread line */}
+          <div className="flex items-center justify-between text-[7px] text-zinc-600 py-0.5">
             <span>Spread ~{spreadPct.toFixed(1)}%</span>
             <span>Rp {Math.round(spread).toLocaleString('id-ID')}</span>
           </div>
 
           {/* Beli */}
-          <div className="mb-1">
-            <div className="text-[8px] text-zinc-500 mb-0.5 font-medium">Harga Beli (buyback)</div>
-            <PriceCell value={data.antam_est_beli} format="currency" decimals={0} className="text-sm font-bold text-emerald-400 tabular-nums" />
+          <div className="flex items-center justify-between mb-0.5">
+            <span className="text-[7px] text-zinc-500">Beli (buyback)</span>
+            <PriceCell value={data.antam_est_beli} format="currency" decimals={0} className="text-[13px] font-bold text-emerald-400 tabular-nums" />
           </div>
 
-          {/* Footer */}
           <div className="mt-auto">
-            <div className="text-[7px] text-zinc-700 leading-snug">
-              * Estimasi spot + premium retail ~15% / buyback ~3%
-            </div>
+            <div className="text-[6px] text-zinc-700">* spot + premium retail ~15% / buyback ~3%</div>
           </div>
         </div>
       </div>

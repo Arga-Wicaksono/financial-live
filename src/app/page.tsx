@@ -33,9 +33,9 @@ function LiveClock() {
       setTime(
         `${String(wib.getHours()).padStart(2, '0')}:${String(wib.getMinutes()).padStart(2, '0')}:${String(wib.getSeconds()).padStart(2, '0')}`
       );
-      const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+      const days = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'MINGGU'];
       const months = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'];
-      setDateStr(`${days[wib.getDay()]}, ${String(wib.getDate()).padStart(2, '0')} ${months[wib.getMonth()]} ${wib.getFullYear()}`);
+      setDateStr(`${days[wib.getDay()]}, ${wib.getDate()} ${months[wib.getMonth()]} ${wib.getFullYear()}`);
     }
     update();
     ref.current = setInterval(update, 1000);
@@ -43,15 +43,15 @@ function LiveClock() {
   }, []);
 
   return (
-    <div className="flex items-center gap-3">
-      <span className="relative flex h-2.5 w-2.5">
+    <div className="flex items-center gap-2.5">
+      <span className="relative flex h-2 w-2">
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
-        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500 live-dot-pulse" />
+        <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500 live-dot-pulse" />
       </span>
-      <span className="text-[10px] font-bold text-green-400 tracking-[0.2em] uppercase">Live</span>
-      <span className="font-mono text-xl font-bold text-white tabular-nums tracking-[0.15em]">{time}</span>
-      <span className="text-[11px] font-medium text-zinc-500 tracking-wide">{dateStr}</span>
-      <span className="text-[10px] text-zinc-600 bg-zinc-800/50 px-1.5 py-0.5 rounded font-mono">WIB</span>
+      <span className="text-[9px] font-bold text-green-400 tracking-[0.2em] uppercase">Live</span>
+      <span className="font-mono text-lg font-bold text-white tabular-nums tracking-[0.12em]">{time}</span>
+      <span className="text-[10px] font-medium text-zinc-500 tracking-wide">{dateStr}</span>
+      <span className="text-[9px] text-zinc-600 bg-zinc-800/50 px-1.5 py-0.5 rounded font-mono">WIB</span>
     </div>
   );
 }
@@ -87,7 +87,7 @@ function TickerTape() {
 
   const content = items.map(item => (
     <span key={item.name} className="inline-flex items-center gap-2 px-4 whitespace-nowrap">
-      <span className="font-bold text-zinc-300 text-[11px]">{item.name}/IDR</span>
+      <span className="font-bold text-zinc-400 text-[11px]">{item.name}/IDR</span>
       <span className="font-mono text-white text-[11px] tabular-nums font-semibold">
         {new Intl.NumberFormat('id-ID').format(item.price)}
       </span>
@@ -98,33 +98,11 @@ function TickerTape() {
   ));
 
   return (
-    <div className="overflow-hidden h-7 flex items-center bg-[#08080a] border-b border-zinc-800/30 shrink-0">
+    <div className="overflow-hidden h-6 flex items-center bg-[#08080a] border-b border-zinc-800/30 shrink-0">
       <div className="flex animate-ticker">
         {content}
         {content}
       </div>
-    </div>
-  );
-}
-
-// ── Status Indicators ──────────────────────────────────────────────────────────
-
-function StatusPills() {
-  return (
-    <div className="flex items-center gap-1.5">
-      {[
-        { label: 'CRYPTO', color: 'bg-amber-500', delay: '0s' },
-        { label: 'SAHAM', color: 'bg-cyan-500', delay: '0.3s' },
-        { label: 'VALAS', color: 'bg-emerald-500', delay: '0.6s' },
-        { label: 'EMAS', color: 'bg-yellow-500', delay: '0.9s' },
-        { label: 'GLOBAL', color: 'bg-blue-500', delay: '1.2s' },
-        { label: 'KOMODITAS', color: 'bg-orange-500', delay: '1.5s' },
-      ].map(({ label, color, delay }) => (
-        <div key={label} className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-zinc-800/40 border border-zinc-800/30">
-          <span className={`w-1.5 h-1.5 rounded-full ${color} status-breathe`} style={{ animationDelay: delay }} />
-          <span className="text-[8px] text-zinc-500 font-bold tracking-wider">{label}</span>
-        </div>
-      ))}
     </div>
   );
 }
@@ -148,83 +126,80 @@ export default function TradingDashboard() {
       <div
         className="flex flex-col overflow-hidden dashboard-grid-bg relative"
         style={{
-          width: '177.78vh',   /* 100/9*16 = 177.78vh */
+          width: '177.78vh',
           maxWidth: '100vw',
-          height: '56.25vw',   /* 100/16*9 = 56.25vw */
+          height: '56.25vw',
           maxHeight: '100vh',
           backgroundColor: '#09090b',
         }}
       >
-        {/* ── Ticker Tape ──────────────────────────────────────────────────── */}
+        {/* ── Ticker Tape (thin) ──────────────────────────────────────────── */}
         <TickerTape />
 
-        {/* ── Top Bar: Logo + Clock + Status ───────────────────────────────── */}
-        <div className="flex items-center justify-between px-4 py-1.5 shrink-0" style={{ background: 'rgba(12, 12, 14, 0.95)' }}>
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-amber-500/20 to-cyan-500/10 border border-amber-500/20 flex items-center justify-center">
-              <Activity className="w-3.5 h-3.5 text-amber-400" />
+        {/* ── Top Bar: Logo + Sentiment + Clock (merged) ──────────────────── */}
+        <div className="flex items-center justify-between px-4 py-1 shrink-0" style={{ background: 'rgba(12, 12, 14, 0.95)' }}>
+          {/* Left: Logo */}
+          <div className="flex items-center gap-2.5">
+            <div className="w-5 h-5 rounded-md bg-gradient-to-br from-amber-500/20 to-cyan-500/10 border border-amber-500/20 flex items-center justify-center">
+              <Activity className="w-3 h-3 text-amber-400" />
             </div>
-            <div>
-              <h1 className="text-xs font-bold text-zinc-200 tracking-[0.15em] uppercase">Market Dashboard</h1>
-              <p className="text-[8px] text-zinc-600 tracking-wider">REAL-TIME INDONESIAN MARKET</p>
-            </div>
-            <StatusPills />
+            <h1 className="text-[11px] font-bold text-zinc-200 tracking-[0.12em] uppercase">Market Dashboard</h1>
+            <div className="w-px h-3.5 bg-zinc-800" />
+            {/* Sentiment bar inline */}
+            <SentimentBar />
           </div>
+          {/* Right: Clock */}
           <LiveClock />
         </div>
 
-        {/* ── Sentiment Bar (Fear & Greed + BI Rate) ──────────────────────── */}
-        <div className="shrink-0 px-4 py-1 bg-[#0a0a0c] border-b border-zinc-800/20">
-          <SentimentBar />
-        </div>
+        {/* ── Main Content (3 rows, no separators) ────────────────────────── */}
+        <div className="flex-1 flex flex-col min-h-0 px-1.5 pt-1 pb-1 gap-1">
 
-        {/* ── Main Content ────────────────────────────────────────────────── */}
-        <div className="flex-1 flex flex-col min-h-0 p-1.5 gap-1.5">
-          {/* ═══ ROW 1: Crypto (28%) ═══ */}
-          <div className="flex-[28] min-h-0 rounded-xl overflow-hidden gradient-border-amber"
+          {/* ═══ ROW 1: Crypto (26%) ═══ */}
+          <div className="flex-[26] min-h-0 rounded-lg overflow-hidden gradient-border-amber"
             style={{ background: 'rgba(10, 10, 12, 0.8)' }}>
             <CryptoCards />
           </div>
 
-          {/* ═══ ROW 2: Stocks + Forex + Gold (42%) ═══ */}
-          <div className="flex-[42] min-h-0 flex gap-1.5">
-            <div className="flex-[38] min-h-0 rounded-xl overflow-hidden"
-              style={{ background: 'rgba(10, 10, 12, 0.8)', border: '1px solid rgba(6, 182, 212, 0.15)' }}>
+          {/* ═══ ROW 2: Stocks + Forex + Gold (44%) ═══ */}
+          <div className="flex-[44] min-h-0 flex gap-1">
+            <div className="flex-[38] min-h-0 rounded-lg overflow-hidden"
+              style={{ background: 'rgba(10, 10, 12, 0.8)', border: '1px solid rgba(6, 182, 212, 0.12)' }}>
               <StocksPanel />
             </div>
-            <div className="flex-[35] min-h-0 rounded-xl overflow-hidden gradient-border-emerald"
+            <div className="flex-[35] min-h-0 rounded-lg overflow-hidden gradient-border-emerald"
               style={{ background: 'rgba(10, 10, 12, 0.8)' }}>
               <ForexGrid />
             </div>
-            <div className="flex-[27] min-h-0 rounded-xl overflow-hidden"
-              style={{ background: 'rgba(10, 10, 12, 0.8)', border: '1px solid rgba(234, 179, 8, 0.15)' }}>
+            <div className="flex-[27] min-h-0 rounded-lg overflow-hidden"
+              style={{ background: 'rgba(10, 10, 12, 0.8)', border: '1px solid rgba(234, 179, 8, 0.12)' }}>
               <GoldPanel />
             </div>
           </div>
 
           {/* ═══ ROW 3: Global Indices + Commodities (30%) ═══ */}
-          <div className="flex-[30] min-h-0 flex gap-1.5">
-            <div className="flex-1 min-h-0 rounded-xl overflow-hidden"
-              style={{ background: 'rgba(10, 10, 12, 0.8)', border: '1px solid rgba(59, 130, 246, 0.15)' }}>
+          <div className="flex-[30] min-h-0 flex gap-1">
+            <div className="flex-1 min-h-0 rounded-lg overflow-hidden"
+              style={{ background: 'rgba(10, 10, 12, 0.8)', border: '1px solid rgba(59, 130, 246, 0.12)' }}>
               <GlobalIndices />
             </div>
-            <div className="flex-1 min-h-0 rounded-xl overflow-hidden"
-              style={{ background: 'rgba(10, 10, 12, 0.8)', border: '1px solid rgba(249, 115, 22, 0.15)' }}>
+            <div className="flex-1 min-h-0 rounded-lg overflow-hidden"
+              style={{ background: 'rgba(10, 10, 12, 0.8)', border: '1px solid rgba(249, 115, 22, 0.12)' }}>
               <CommoditiesGrid />
             </div>
           </div>
         </div>
 
-        {/* ── News Ticker (RSS Feed) ─────────────────────────────────────── */}
+        {/* ── News Ticker ─────────────────────────────────────────────────── */}
         <NewsTicker />
 
         {/* ── Bottom Bar ──────────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between px-4 py-1 shrink-0 bg-[#0c0c0e] border-t border-zinc-800/30 text-[9px] text-zinc-700">
-          <span>Indodax &bull; Yahoo Finance &bull; ExchangeRate-API &bull; fawazahmed0/currency-api &bull; alternative.me</span>
-          <span className="flex items-center gap-3">
+        <div className="flex items-center justify-between px-4 py-0.5 shrink-0 bg-[#0c0c0e] border-t border-zinc-800/30 text-[8px] text-zinc-700">
+          <span>Indodax &bull; Yahoo Finance &bull; ExchangeRate-API &bull; fawazahmed0 &bull; alternative.me</span>
+          <span className="flex items-center gap-2">
             <span>Crypto 10s &bull; Saham/Valas/Global 60s &bull; Emas 5m &bull; News 2m</span>
-            <span className="text-zinc-600">|</span>
-            <span className="text-zinc-600">16:9 &bull; Press <kbd className="px-1 py-0.5 bg-zinc-800/50 rounded text-[8px] text-zinc-500 font-mono">F</kbd> fullscreen</span>
+            <span className="text-zinc-800">|</span>
+            <span className="text-zinc-600">Press <kbd className="px-1 py-0 bg-zinc-800/50 rounded text-[7px] text-zinc-500 font-mono">F</kbd> fullscreen</span>
           </span>
         </div>
       </div>
