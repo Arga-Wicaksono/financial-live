@@ -5,9 +5,10 @@ import { Music, Volume2, VolumeX } from 'lucide-react';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-type BgmMode = 'synth' | 'custom';
+type BgmMode = 'synth' | 'file';
 
 // ── Ambient Synth Engine (Web Audio API) ────────────────────────────────────────
+// Rewritten: louder, warmer mid-range tones suitable for YouTube live streams
 
 class AmbientSynth {
   private ctx: AudioContext | null = null;
@@ -19,106 +20,149 @@ class AmbientSynth {
 
   async start(volume: number) {
     if (this.isRunning) return;
+
     this.ctx = new AudioContext();
+
+    // Master gain — boost the input volume significantly
     this.masterGain = this.ctx.createGain();
-    this.masterGain.gain.value = volume;
+    this.masterGain.gain.value = volume * 3.5; // 3.5x boost so default 0.3 → 1.05 effective
     this.masterGain.connect(this.ctx.destination);
 
-    // Low-pass filter for warmth
+    // Warm low-pass filter — wider cutoff for audible mid-range
     this.filter = this.ctx.createBiquadFilter();
     this.filter.type = 'lowpass';
-    this.filter.frequency.value = 800;
-    this.filter.Q.value = 0.5;
+    this.filter.frequency.value = 1800;
+    this.filter.Q.value = 0.7;
     this.filter.connect(this.masterGain);
 
-    // Chord tones: C2, G2, C3, E3, G3 — soft financial ambient
-    const notes = [65.41, 98.0, 130.81, 164.81, 196.0];
-    const types: OscillatorType[] = ['sine', 'sine', 'triangle', 'sine', 'sine'];
-    const gains = [0.08, 0.06, 0.05, 0.03, 0.04];
+    // ── Pad Layer: Rich Cmaj7 chord in audible range ──
+    // C3(130), E3(164), G3(196), B3(246) — pleasant jazz voicing
+    const padNotes = [130.81, 164.81, 196.0, 246.94];
+    const padGains = [0.15, 0.12, 0.13, 0.10];
 
-    notes.forEach((freq, i) => {
-      const osc = this.ctx!.createOscillator();
-      osc.type = types[i];
-      osc.frequency.value = freq;
+    padNotes.forEach((freq, i) => {
+      // Two detuned oscillators per note for warmth
+      for (const detune of [-6, 6]) {
+        const osc = this.ctx!.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        osc.detune.value = detune;
 
-      // Individual gain
-      const oscGain = this.ctx!.createGain();
-      oscGain.gain.value = gains[i];
+        const oscGain = this.ctx!.createGain();
+        oscGain.gain.value = padGains[i];
 
-      // LFO for slow tremolo — each voice slightly different rate
+        osc.connect(oscGain);
+        oscGain.connect(this.filter!);
+        osc.start();
+        this.oscillators.push(osc);
+      }
+
+      // Slow LFO tremolo per voice
       const lfo = this.ctx!.createOscillator();
       lfo.type = 'sine';
-      lfo.frequency.value = 0.05 + i * 0.02; // very slow
+      lfo.frequency.value = 0.04 + i * 0.015;
       const lfoGain = this.ctx!.createGain();
-      lfoGain.gain.value = gains[i] * 0.3; // subtle modulation
+      lfoGain.gain.value = padGains[i] * 0.25;
+      lfo.connect(lfoGain);
+      lfo.start();
+      this.lfos.push(lfo);
+      // Note: LFO connected below via separate routing
+    });
+
+    // ── Sub-bass: gentle foundation ──
+    const sub = this.ctx.createOscillator();
+    sub.type = 'sine';
+    sub.frequency.value = 65.41; // C2
+    const subGain = this.ctx.createGain();
+    subGain.gain.value = 0.10;
+    sub.connect(subGain);
+    subGain.connect(this.filter!);
+    sub.start();
+    this.oscillators.push(sub);
+
+    // ── High shimmer: C5 + E5 sparkle ──
+    const shimmerNotes = [523.25, 659.25]; // C5, E5
+    shimmerNotes.forEach((freq, i) => {
+      const osc = this.ctx!.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+
+      // Bandpass for sparkle
+      const bp = this.ctx!.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = freq;
+      bp.Q.value = 3;
+
+      const oscGain = this.ctx!.createGain();
+      oscGain.gain.value = 0.025;
+
+      // LFO for gentle shimmer
+      const lfo = this.ctx!.createOscillator();
+      lfo.type = 'sine';
+      lfo.frequency.value = 0.06 + i * 0.03;
+      const lfoGain = this.ctx!.createGain();
+      lfoGain.gain.value = 0.02;
       lfo.connect(lfoGain);
       lfoGain.connect(oscGain.gain);
       lfo.start();
       this.lfos.push(lfo);
 
-      osc.connect(oscGain);
-      oscGain.connect(this.filter!);
+      osc.connect(bp);
+      bp.connect(oscGain);
+      oscGain.connect(this.masterGain!);
       osc.start();
       this.oscillators.push(osc);
     });
 
-    // Slow filter sweep for movement
+    // ── Triangle pad for richness ──
+    const tri = this.ctx.createOscillator();
+    tri.type = 'triangle';
+    tri.frequency.value = 261.63; // C4
+    const triGain = this.ctx.createGain();
+    triGain.gain.value = 0.06;
+    tri.connect(triGain);
+    triGain.connect(this.filter!);
+    tri.start();
+    this.oscillators.push(tri);
+
+    // ── Slow filter sweep for movement ──
     const filterLfo = this.ctx.createOscillator();
     filterLfo.type = 'sine';
-    filterLfo.frequency.value = 0.03;
+    filterLfo.frequency.value = 0.025;
     const filterLfoGain = this.ctx.createGain();
-    filterLfoGain.gain.value = 300;
+    filterLfoGain.gain.value = 500; // sweep ±500Hz
     filterLfo.connect(filterLfoGain);
     filterLfoGain.connect(this.filter.frequency);
     filterLfo.start();
     this.lfos.push(filterLfo);
-
-    // High shimmer layer
-    const shimmer = this.ctx.createOscillator();
-    shimmer.type = 'sine';
-    shimmer.frequency.value = 523.25; // C5
-    const shimmerGain = this.ctx.createGain();
-    shimmerGain.gain.value = 0.008;
-    const shimmerFilter = this.ctx.createBiquadFilter();
-    shimmerFilter.type = 'bandpass';
-    shimmerFilter.frequency.value = 600;
-    shimmerFilter.Q.value = 2;
-    const shimmerLfo = this.ctx.createOscillator();
-    shimmerLfo.type = 'sine';
-    shimmerLfo.frequency.value = 0.08;
-    const shimmerLfoGain = this.ctx.createGain();
-    shimmerLfoGain.gain.value = 0.006;
-    shimmerLfo.connect(shimmerLfoGain);
-    shimmerLfoGain.connect(shimmerGain.gain);
-    shimmer.connect(shimmerFilter);
-    shimmerFilter.connect(shimmerGain);
-    shimmerGain.connect(this.masterGain);
-    shimmer.start();
-    shimmerLfo.start();
-    this.oscillators.push(shimmer);
-    this.lfos.push(shimmerLfo);
 
     this.isRunning = true;
   }
 
   setVolume(vol: number) {
     if (this.masterGain && this.ctx) {
-      this.masterGain.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.3);
+      this.masterGain.gain.setTargetAtTime(vol * 3.5, this.ctx.currentTime, 0.3);
     }
   }
 
   stop() {
-    this.oscillators.forEach(o => { try { o.stop(); } catch {} });
-    this.lfos.forEach(l => { try { l.stop(); } catch {} });
-    this.oscillators = [];
-    this.lfos = [];
-    if (this.ctx) {
-      this.ctx.close();
-      this.ctx = null;
+    // Fade out before stopping
+    if (this.masterGain && this.ctx) {
+      this.masterGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.15);
     }
-    this.masterGain = null;
-    this.filter = null;
-    this.isRunning = false;
+    setTimeout(() => {
+      this.oscillators.forEach(o => { try { o.stop(); } catch {} });
+      this.lfos.forEach(l => { try { l.stop(); } catch {} });
+      this.oscillators = [];
+      this.lfos = [];
+      if (this.ctx) {
+        this.ctx.close();
+        this.ctx = null;
+      }
+      this.masterGain = null;
+      this.filter = null;
+      this.isRunning = false;
+    }, 300);
   }
 
   get running() {
@@ -126,9 +170,9 @@ class AmbientSynth {
   }
 }
 
-// ── Custom Audio Player ───────────────────────────────────────────────────────
+// ── File-based Audio Player ───────────────────────────────────────────────────
 
-class CustomAudioPlayer {
+class FileAudioPlayer {
   private audio: HTMLAudioElement | null = null;
   private _isPlaying = false;
 
@@ -137,7 +181,6 @@ class CustomAudioPlayer {
     this.audio = new Audio(url);
     this.audio.loop = true;
     this.audio.volume = volume;
-    this.audio.crossOrigin = 'anonymous';
     try {
       await this.audio.play();
       this._isPlaying = true;
@@ -178,20 +221,146 @@ class CustomAudioPlayer {
   get isPlaying() {
     return this._isPlaying;
   }
-
-  get loaded() {
-    return this.audio !== null;
-  }
 }
 
-// ── Preset royalty-free music URLs ─────────────────────────────────────────────
+// ── Track list ────────────────────────────────────────────────────────────────
+// synth = Web Audio API (guaranteed to work, no CORS)
+// file = local public audio file
 
-const PRESET_TRACKS = [
-  { label: 'Ambient Synth', url: '__synth__', mode: 'synth' as BgmMode },
-  { label: 'Lo-Fi Chill', url: 'https://stream.zeno.fm/0r0xa792kwzuv', mode: 'custom' as BgmMode },
-  { label: 'Chillhop Radio', url: 'https://streams.fluxfm.de/Chillhop/mp3-320', mode: 'custom' as BgmMode },
-  { label: 'Ambient Space', url: 'https://icecast.walmradio.com:8443/classic', mode: 'custom' as BgmMode },
+const TRACKS = [
+  { label: 'Ambient Synth', mode: 'synth' as BgmMode, desc: 'Generated' },
+  { label: 'Ambient Synth v2', mode: 'synth2' as BgmMode, desc: 'Deep Pad' },
 ];
+
+// ── Ambient Synth v2 (Deep Pad) ───────────────────────────────────────────────
+
+class AmbientSynthV2 {
+  private ctx: AudioContext | null = null;
+  private masterGain: GainNode | null = null;
+  private oscillators: OscillatorNode[] = [];
+  private lfos: OscillatorNode[] = [];
+  private filter: BiquadFilterNode | null = null;
+  private isRunning = false;
+
+  async start(volume: number) {
+    if (this.isRunning) return;
+
+    this.ctx = new AudioContext();
+    this.masterGain = this.ctx.createGain();
+    this.masterGain.gain.value = volume * 3.0;
+    this.masterGain.connect(this.ctx.destination);
+
+    this.filter = this.ctx.createBiquadFilter();
+    this.filter.type = 'lowpass';
+    this.filter.frequency.value = 1200;
+    this.filter.Q.value = 0.5;
+    this.filter.connect(this.masterGain);
+
+    // Dm9 chord: D3, F3, A3, C4, E4 — cinematic feel
+    const notes = [146.83, 174.61, 220.0, 261.63, 329.63];
+    const gains = [0.14, 0.11, 0.12, 0.08, 0.06];
+
+    notes.forEach((freq, i) => {
+      const osc = this.ctx!.createOscillator();
+      osc.type = i < 3 ? 'triangle' : 'sine';
+      osc.frequency.value = freq;
+
+      // Detune for width
+      const osc2 = this.ctx!.createOscillator();
+      osc2.type = osc.type;
+      osc2.frequency.value = freq;
+      osc2.detune.value = 8;
+
+      const gain = this.ctx!.createGain();
+      gain.gain.value = gains[i];
+
+      osc.connect(gain);
+      osc2.connect(gain);
+      gain.connect(this.filter!);
+      osc.start();
+      osc2.start();
+      this.oscillators.push(osc, osc2);
+
+      // Tremolo
+      const lfo = this.ctx!.createOscillator();
+      lfo.type = 'sine';
+      lfo.frequency.value = 0.03 + i * 0.01;
+      const lfoGain = this.ctx!.createGain();
+      lfoGain.gain.value = gains[i] * 0.2;
+      lfo.connect(lfoGain);
+      lfo.start();
+      this.lfos.push(lfo);
+    });
+
+    // Sub bass
+    const sub = this.ctx.createOscillator();
+    sub.type = 'sine';
+    sub.frequency.value = 73.42; // D2
+    const subGain = this.ctx.createGain();
+    subGain.gain.value = 0.12;
+    sub.connect(subGain);
+    subGain.connect(this.filter!);
+    sub.start();
+    this.oscillators.push(sub);
+
+    // High pad E5
+    const high = this.ctx.createOscillator();
+    high.type = 'sine';
+    high.frequency.value = 659.25;
+    const highGain = this.ctx.createGain();
+    highGain.gain.value = 0.02;
+    const highLfo = this.ctx.createOscillator();
+    highLfo.type = 'sine';
+    highLfo.frequency.value = 0.05;
+    const highLfoGain = this.ctx.createGain();
+    highLfoGain.gain.value = 0.015;
+    highLfo.connect(highLfoGain);
+    highLfoGain.connect(highGain.gain);
+    high.connect(highGain);
+    highGain.connect(this.masterGain!);
+    high.start();
+    highLfo.start();
+    this.oscillators.push(high);
+    this.lfos.push(highLfo);
+
+    // Filter sweep
+    const fLfo = this.ctx.createOscillator();
+    fLfo.type = 'sine';
+    fLfo.frequency.value = 0.02;
+    const fLfoGain = this.ctx.createGain();
+    fLfoGain.gain.value = 400;
+    fLfo.connect(fLfoGain);
+    fLfoGain.connect(this.filter.frequency);
+    fLfo.start();
+    this.lfos.push(fLfo);
+
+    this.isRunning = true;
+  }
+
+  setVolume(vol: number) {
+    if (this.masterGain && this.ctx) {
+      this.masterGain.gain.setTargetAtTime(vol * 3.0, this.ctx.currentTime, 0.3);
+    }
+  }
+
+  stop() {
+    if (this.masterGain && this.ctx) {
+      this.masterGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.15);
+    }
+    setTimeout(() => {
+      this.oscillators.forEach(o => { try { o.stop(); } catch {} });
+      this.lfos.forEach(l => { try { l.stop(); } catch {} });
+      this.oscillators = [];
+      this.lfos = [];
+      if (this.ctx) { this.ctx.close(); this.ctx = null; }
+      this.masterGain = null;
+      this.filter = null;
+      this.isRunning = false;
+    }, 300);
+  }
+
+  get running() { return this.isRunning; }
+}
 
 // ── BGM Player Component ──────────────────────────────────────────────────────
 
@@ -200,11 +369,11 @@ export function BgmPlayer() {
   const [volume, setVolume] = useState(0.3);
   const [showPanel, setShowPanel] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(0);
-  const [audioReady, setAudioReady] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
-  const synthRef = useRef<AmbientSynth | null>(null);
-  const customRef = useRef<CustomAudioPlayer | null>(null);
+  const synth1Ref = useRef<AmbientSynth | null>(null);
+  const synth2Ref = useRef<AmbientSynthV2 | null>(null);
+  const fileRef = useRef<FileAudioPlayer | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Close panel on outside click
@@ -218,82 +387,88 @@ export function BgmPlayer() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [showPanel]);
 
-  const togglePlay = useCallback(async () => {
-    const track = PRESET_TRACKS[currentTrack];
+  const stopAll = useCallback(() => {
+    synth1Ref.current?.stop();
+    synth1Ref.current = null;
+    synth2Ref.current?.stop();
+    synth2Ref.current = null;
+    fileRef.current?.stop();
+    fileRef.current = null;
+  }, []);
 
+  const togglePlay = useCallback(async () => {
     if (isPlaying) {
-      // Stop all
-      synthRef.current?.stop();
-      synthRef.current = null;
-      customRef.current?.stop();
-      customRef.current = null;
+      stopAll();
       setIsPlaying(false);
       return;
     }
 
     setIsLoading(true);
+    const track = TRACKS[currentTrack];
 
     if (track.mode === 'synth') {
       const synth = new AmbientSynth();
       await synth.start(volume);
-      synthRef.current = synth;
+      synth1Ref.current = synth;
       setIsPlaying(true);
-      setAudioReady(true);
+    } else if (track.mode === 'synth2') {
+      const synth = new AmbientSynthV2();
+      await synth.start(volume);
+      synth2Ref.current = synth;
+      setIsPlaying(true);
     } else {
-      const player = new CustomAudioPlayer();
-      await player.start(track.url, volume);
-      customRef.current = player;
+      const player = new FileAudioPlayer();
+      // For file mode, you'd place an mp3 in /public/bgm/ and reference /bgm/track.mp3
+      await player.start(track.desc, volume);
+      fileRef.current = player;
       setIsPlaying(player.isPlaying);
-      setAudioReady(player.isPlaying);
     }
 
     setIsLoading(false);
-  }, [isPlaying, volume, currentTrack]);
+  }, [isPlaying, volume, currentTrack, stopAll]);
 
   const changeVolume = useCallback((v: number) => {
     setVolume(v);
-    synthRef.current?.setVolume(v);
-    customRef.current?.setVolume(v);
+    synth1Ref.current?.setVolume(v);
+    synth2Ref.current?.setVolume(v);
+    fileRef.current?.setVolume(v);
   }, []);
 
   const switchTrack = useCallback((idx: number) => {
     const wasPlaying = isPlaying;
-    // Stop current
-    synthRef.current?.stop();
-    synthRef.current = null;
-    customRef.current?.stop();
-    customRef.current = null;
+    stopAll();
     setIsPlaying(false);
     setCurrentTrack(idx);
 
-    // Auto-play new track if was playing
     if (wasPlaying) {
       setTimeout(async () => {
-        const track = PRESET_TRACKS[idx];
+        const track = TRACKS[idx];
         if (track.mode === 'synth') {
           const synth = new AmbientSynth();
           await synth.start(volume);
-          synthRef.current = synth;
+          synth1Ref.current = synth;
+          setIsPlaying(true);
+        } else if (track.mode === 'synth2') {
+          const synth = new AmbientSynthV2();
+          await synth.start(volume);
+          synth2Ref.current = synth;
           setIsPlaying(true);
         } else {
-          const player = new CustomAudioPlayer();
-          await player.start(track.url, volume);
-          customRef.current = player;
+          const player = new FileAudioPlayer();
+          await player.start(track.desc, volume);
+          fileRef.current = player;
           setIsPlaying(player.isPlaying);
         }
-      }, 100);
+      }, 400); // wait for fade-out
     }
-  }, [isPlaying, volume]);
+  }, [isPlaying, volume, stopAll]);
 
-  // Cleanup on unmount
+  // Cleanup
   useEffect(() => {
-    return () => {
-      synthRef.current?.stop();
-      customRef.current?.stop();
-    };
-  }, []);
+    return () => { stopAll(); };
+  }, [stopAll]);
 
-  const track = PRESET_TRACKS[currentTrack];
+  const track = TRACKS[currentTrack];
 
   return (
     <div className="relative" ref={panelRef}>
@@ -332,7 +507,7 @@ export function BgmPlayer() {
           <div className="mb-3">
             <div className="text-[10px] text-zinc-600 uppercase tracking-wider font-semibold mb-1.5">Pilih Track</div>
             <div className="flex flex-col gap-0.5">
-              {PRESET_TRACKS.map((t, i) => (
+              {TRACKS.map((t, i) => (
                 <button
                   key={i}
                   onClick={() => switchTrack(i)}
@@ -346,7 +521,7 @@ export function BgmPlayer() {
                     <span className={`w-1.5 h-1.5 rounded-full ${i === currentTrack && isPlaying ? 'bg-green-400' : 'bg-zinc-700'}`} />
                     <span className={`text-xs font-medium ${i === currentTrack ? 'text-zinc-200' : 'text-zinc-500'}`}>{t.label}</span>
                   </div>
-                  <span className="text-[10px] text-zinc-700">{t.mode === 'synth' ? 'Synth' : 'Radio'}</span>
+                  <span className="text-[10px] text-zinc-700">{t.desc}</span>
                 </button>
               ))}
             </div>
